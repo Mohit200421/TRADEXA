@@ -13,7 +13,7 @@ const app = express();
 
 
 // Middleware
-app.use(cors({ origin: ["http://localhost:5173", "https://YOUR-VERCEL-URL.vercel.app"]
+app.use(cors({ origin: ["http://localhost:5173", "https://trade-fx-flax.vercel.app"]
 }));
 app.use(express.json());
 app.use(cookieParser());
