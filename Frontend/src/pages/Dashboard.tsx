@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom"; // ✅ ADD THIS
+
 import {
   LineChart,
   Line,
@@ -22,10 +24,10 @@ import {
 } from "../services/tradeService";
 
 export default function Dashboard() {
-  const [data, setData] = useState(null);
-  const [curve, setCurve] = useState([]);
-  const [monthly, setMonthly] = useState([]);
-  const [advanced, setAdvanced] = useState(null);
+  const [data, setData] = useState<any>(null);
+  const [curve, setCurve] = useState<any[]>([]);
+  const [monthly, setMonthly] = useState<any[]>([]);
+  const [advanced, setAdvanced] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
@@ -41,7 +43,7 @@ export default function Dashboard() {
 
       const advRes = await getAdvancedAnalytics();
       setAdvanced(advRes.data);
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to load analytics ❌");
     } finally {
       setLoading(false);
@@ -56,7 +58,18 @@ export default function Dashboard() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
+      {/* Header + Bar Replay Link */}
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
+
+        {/* ✅ Bar Replay Link */}
+        <Link
+          to="/replay"
+          className="text-blue-600 underline font-medium"
+        >
+          Bar Replay
+        </Link>
+      </div>
 
       {/* Summary Cards */}
       {data && (
@@ -156,7 +169,7 @@ export default function Dashboard() {
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-semibold mb-2">Top Symbols</h2>
             {advanced.bestSymbols?.length > 0 ? (
-              advanced.bestSymbols.map((s) => (
+              advanced.bestSymbols.map((s: any) => (
                 <p key={s.symbol} className="text-sm">
                   {s.symbol} → <b>{Number(s.pnl || 0).toFixed(2)}</b> ({s.trades})
                 </p>
@@ -169,7 +182,7 @@ export default function Dashboard() {
           <div className="bg-white p-4 rounded-xl shadow">
             <h2 className="font-semibold mb-2">Top Setups</h2>
             {advanced.bestSetups?.length > 0 ? (
-              advanced.bestSetups.map((s) => (
+              advanced.bestSetups.map((s: any) => (
                 <p key={s.setup} className="text-sm">
                   {s.setup} → <b>{Number(s.pnl || 0).toFixed(2)}</b> ({s.trades})
                 </p>
@@ -184,7 +197,7 @@ export default function Dashboard() {
   );
 }
 
-function Card({ title, value }) {
+function Card({ title, value }: { title: string; value: any }) {
   return (
     <div className="bg-white p-4 rounded-xl shadow">
       <p className="text-gray-500 text-sm">{title}</p>
