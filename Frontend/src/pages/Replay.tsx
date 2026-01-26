@@ -44,7 +44,7 @@ export default function Replay() {
       setCandles(formatted);
 
       // ✅ start from 50 candles (not 2000)
-      setVisibleIndex(50);
+      setVisibleIndex(2000);
 
       toast.success("Candles loaded ✅", { id: "load" });
 
