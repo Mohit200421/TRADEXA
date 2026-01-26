@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getAnalyticsSummary } from "../services/tradeService";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { getAnalyticsSummary, getEquityCurve } from "../services/tradeService";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
+  const [curve, setCurve] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
     try {
       const res = await getAnalyticsSummary();
       setData(res.data);
-    } catch {
-      toast.error("Failed to load analytics ❌");
+
+      const curveRes = await getEquityCurve();
+      setCurve(curveRes.data);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to load analytics ❌");
     } finally {
       setLoading(false);
     }
@@ -27,14 +32,37 @@ export default function Dashboard() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <Card title="Total Trades" value={data.totalTrades} />
-        <Card title="Wins" value={data.wins} />
-        <Card title="Losses" value={data.losses} />
-        <Card title="Win Rate" value={`${data.winRate.toFixed(2)}%`} />
-        <Card title="Total PnL" value={data.totalPnL.toFixed(2)} />
-        <Card title="Avg Win" value={data.avgWin.toFixed(2)} />
-        <Card title="Avg Loss" value={data.avgLoss.toFixed(2)} />
+      {/* Summary Cards */}
+      {data && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <Card title="Total Trades" value={data.totalTrades} />
+          <Card title="Wins" value={data.wins} />
+          <Card title="Losses" value={data.losses} />
+          <Card title="Win Rate" value={`${Number(data.winRate || 0).toFixed(2)}%`} />
+          <Card title="Total PnL" value={Number(data.totalPnL || 0).toFixed(2)} />
+          <Card title="Avg Win" value={Number(data.avgWin || 0).toFixed(2)} />
+          <Card title="Avg Loss" value={Number(data.avgLoss || 0).toFixed(2)} />
+        </div>
+      )}
+
+      {/* Equity Curve */}
+      <div className="bg-white p-4 rounded-xl shadow mt-6">
+        <h2 className="text-lg font-semibold mb-3">Equity Curve</h2>
+
+        {curve.length === 0 ? (
+          <p className="text-gray-500 text-sm">No data yet. Add some trades ✅</p>
+        ) : (
+          <div style={{ width: "100%", height: 300 }}>
+            <ResponsiveContainer>
+              <LineChart data={curve}>
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="equity" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   );

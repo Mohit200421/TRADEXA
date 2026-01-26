@@ -9,3 +9,5 @@ export const deleteTrade = (id: string) => API.delete(`/api/trades/${id}`);
 export const getTradeById = (id: string) => API.get(`/api/trades/${id}`);
 
 export const getAnalyticsSummary = () => API.get("/api/trades/analytics/summary");
+
+export const getEquityCurve = () => API.get("/api/trades/analytics/equity-curve");
