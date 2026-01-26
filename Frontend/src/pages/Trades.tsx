@@ -47,12 +47,13 @@ export default function Trades() {
 
     try {
       setUploading(true);
-      const res = await uploadImage(file);
+      const imageUrl = await uploadImage(file);
 
-      setForm((prev) => ({
-        ...prev,
-        screenshotUrl: res.data.imageUrl,
-      }));
+setForm((prev) => ({
+  ...prev,
+  screenshotUrl: imageUrl,
+}));
+
 
       toast.success("Screenshot uploaded ✅");
     } catch (err: any) {

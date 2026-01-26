@@ -1,53 +1,50 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { getAnalyticsSummary } from "../services/tradeService";
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
-  const navigate = useNavigate();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    toast.success("Logged out ✅");
-    navigate("/");
+  const fetchAnalytics = async () => {
+    try {
+      const res = await getAnalyticsSummary();
+      setData(res.data);
+    } catch {
+      toast.error("Failed to load analytics ❌");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await API.get("/api/auth/me");
-        setUser(res.data);
-      } catch (err) {
-        toast.error("Session expired ❌");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
-    };
-
-    fetchMe();
+    fetchAnalytics();
   }, []);
+
+  if (loading) return <p className="p-6">Loading dashboard...</p>;
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button
-          onClick={logout}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Analytics Dashboard</h1>
 
-      {user ? (
-        <div className="mt-4 bg-white p-4 rounded shadow">
-          <p className="font-semibold">Welcome, {user.name} 👋</p>
-          <p className="text-sm text-gray-600">{user.email}</p>
-        </div>
-      ) : (
-        <p className="mt-4">Loading...</p>
-      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card title="Total Trades" value={data.totalTrades} />
+        <Card title="Wins" value={data.wins} />
+        <Card title="Losses" value={data.losses} />
+        <Card title="Win Rate" value={`${data.winRate.toFixed(2)}%`} />
+        <Card title="Total PnL" value={data.totalPnL.toFixed(2)} />
+        <Card title="Avg Win" value={data.avgWin.toFixed(2)} />
+        <Card title="Avg Loss" value={data.avgLoss.toFixed(2)} />
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, value }: any) {
+  return (
+    <div className="bg-white p-4 rounded-xl shadow">
+      <p className="text-gray-500 text-sm">{title}</p>
+      <h2 className="text-xl font-bold">{value}</h2>
     </div>
   );
 }

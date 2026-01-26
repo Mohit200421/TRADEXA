@@ -142,3 +142,57 @@ exports.deleteTrade = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+
+exports.getTradeById = async (req, res) => {
+  try {
+    const trade = await Trade.findOne({
+      _id: req.params.id,
+      user: req.user.id,
+    });
+
+    if (!trade) {
+      return res.status(404).json({ message: "Trade not found" });
+    }
+
+    res.json(trade);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.getAnalyticsSummary = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user.id });
+
+    const totalTrades = trades.length;
+    const wins = trades.filter((t) => t.pnl > 0).length;
+    const losses = trades.filter((t) => t.pnl < 0).length;
+
+    const totalPnL = trades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+    const avgWin =
+      wins === 0
+        ? 0
+        : trades.filter((t) => t.pnl > 0).reduce((s, t) => s + t.pnl, 0) / wins;
+
+    const avgLoss =
+      losses === 0
+        ? 0
+        : trades.filter((t) => t.pnl < 0).reduce((s, t) => s + t.pnl, 0) / losses;
+
+    const winRate = totalTrades === 0 ? 0 : (wins / totalTrades) * 100;
+
+    res.json({
+      totalTrades,
+      wins,
+      losses,
+      totalPnL,
+      avgWin,
+      avgLoss,
+      winRate,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Analytics error" });
+  }
+};
