@@ -11,3 +11,8 @@ export const getTradeById = (id: string) => API.get(`/api/trades/${id}`);
 export const getAnalyticsSummary = () => API.get("/api/trades/analytics/summary");
 
 export const getEquityCurve = () => API.get("/api/trades/analytics/equity-curve");
+
+export const getMonthlyAnalytics = () => API.get("/api/trades/analytics/monthly");
+
+
+export const getAdvancedAnalytics = () => API.get("/api/trades/analytics/advanced");
