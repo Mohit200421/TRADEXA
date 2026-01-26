@@ -23,8 +23,8 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trades" element={<Trades />} />
         <Route path="/reviews" element={<Reviews />} />
-        <Route path="/replay" element={<ReplayBacktest />} />
         <Route path="/replay" element={<Replay />} />
+<Route path="/replay-backtest" element={<ReplayBacktest />} />
 
 
 
