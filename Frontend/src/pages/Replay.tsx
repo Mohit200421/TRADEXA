@@ -10,7 +10,10 @@ export default function Replay() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setIntervalValue] = useState("1h");
   const [candles, setCandles] = useState<any[]>([]);
+
+  // 🔥 Start replay with 50 candles
   const [visibleIndex, setVisibleIndex] = useState(50);
+
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(800);
 
@@ -26,8 +29,7 @@ export default function Replay() {
       const data = await res.json();
 
       if (!Array.isArray(data)) {
-        toast.error("Invalid Symbol ❌");
-        toast.dismiss("load");
+        toast.error("Invalid Symbol ❌", { id: "load" });
         return;
       }
 
@@ -40,9 +42,16 @@ export default function Replay() {
       }));
 
       setCandles(formatted);
+
+      // ✅ start from 50 candles (not 2000)
       setVisibleIndex(50);
 
       toast.success("Candles loaded ✅", { id: "load" });
+
+      // ✅ Fit content after load
+      setTimeout(() => {
+        chartInstanceRef.current?.timeScale().fitContent();
+      }, 200);
     } catch (err) {
       toast.error("Failed to load candles ❌", { id: "load" });
     }
@@ -86,14 +95,17 @@ export default function Replay() {
   useEffect(() => {
     if (!candles.length) return;
 
-    const slice = candles.slice(0, visibleIndex);
+    // 🔥 prevent overflow
+    const safeIndex = Math.min(visibleIndex, candles.length);
+
+    const slice = candles.slice(0, safeIndex);
     candleSeriesRef.current?.setData(slice);
-    chartInstanceRef.current?.timeScale().fitContent();
   }, [candles, visibleIndex]);
 
   // ✅ Play replay
   useEffect(() => {
     if (!playing) return;
+    if (!candles.length) return;
 
     const timer = setInterval(() => {
       setVisibleIndex((prev) => {
@@ -107,7 +119,7 @@ export default function Replay() {
     }, speed);
 
     return () => clearInterval(timer);
-  }, [playing, speed, candles.length]);
+  }, [playing, speed, candles.length, candles]);
 
   return (
     <div className="p-6">
@@ -165,7 +177,7 @@ export default function Replay() {
           </button>
 
           <button
-            onClick={() => setVisibleIndex((prev) => prev + 1)}
+            onClick={() => setVisibleIndex((prev) => Math.min(prev + 1, candles.length))}
             className="bg-gray-600 text-white px-4 py-2 rounded"
             disabled={!candles.length}
           >
@@ -176,6 +188,7 @@ export default function Replay() {
             onClick={() => {
               setPlaying(false);
               setVisibleIndex(50);
+              chartInstanceRef.current?.timeScale().fitContent();
             }}
             className="bg-red-600 text-white px-4 py-2 rounded"
             disabled={!candles.length}
