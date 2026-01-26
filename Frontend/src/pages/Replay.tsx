@@ -2,28 +2,61 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createChart } from "lightweight-charts";
 
+const FOREX_SYMBOLS = [
+  "EURUSD",
+  "GBPUSD",
+  "USDJPY",
+  "AUDUSD",
+  "USDCAD",
+  "USDCHF",
+  "NZDUSD",
+  "XAUUSD",
+];
+
+const CRYPTO_SYMBOLS = [
+  "BTCUSDT",
+  "ETHUSDT",
+  "BNBUSDT",
+  "SOLUSDT",
+  "XRPUSDT",
+  "DOGEUSDT",
+  "ADAUSDT",
+];
+
 export default function Replay() {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const candleSeriesRef = useRef<any>(null);
   const chartInstanceRef = useRef<any>(null);
 
+  const [market, setMarket] = useState<"CRYPTO" | "FOREX">("CRYPTO");
   const [symbol, setSymbol] = useState("BTCUSDT");
+  const [search, setSearch] = useState("");
+
   const [interval, setIntervalValue] = useState("1h");
   const [candles, setCandles] = useState<any[]>([]);
-
-  // 🔥 Start replay with 50 candles
   const [visibleIndex, setVisibleIndex] = useState(50);
 
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(800);
 
-  // ✅ Fetch candles from Binance
+  // ✅ Binance only supports crypto directly
+  const getBinanceSymbol = () => {
+    if (market === "CRYPTO") return symbol.toUpperCase();
+
+    // 🔥 Forex mapping idea (for now demo)
+    // Binance doesn't provide real forex candles.
+    // We keep it as "simulation" or later connect to TwelveData / Oanda / AlphaVantage
+    return "BTCUSDT"; // fallback
+  };
+
   const fetchCandles = async () => {
     try {
       setPlaying(false);
       toast.loading("Loading candles...", { id: "load" });
 
-      const url = `https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=500`;
+      const finalSymbol = getBinanceSymbol();
+
+      const url = `https://api.binance.com/api/v3/klines?symbol=${finalSymbol}&interval=${interval}&limit=500`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -42,13 +75,10 @@ export default function Replay() {
       }));
 
       setCandles(formatted);
-
-      // ✅ start from 50 candles (not 2000)
-      setVisibleIndex(2000);
+      setVisibleIndex(50);
 
       toast.success("Candles loaded ✅", { id: "load" });
 
-      // ✅ Fit content after load
       setTimeout(() => {
         chartInstanceRef.current?.timeScale().fitContent();
       }, 200);
@@ -95,9 +125,7 @@ export default function Replay() {
   useEffect(() => {
     if (!candles.length) return;
 
-    // 🔥 prevent overflow
     const safeIndex = Math.min(visibleIndex, candles.length);
-
     const slice = candles.slice(0, safeIndex);
     candleSeriesRef.current?.setData(slice);
   }, [candles, visibleIndex]);
@@ -121,20 +149,62 @@ export default function Replay() {
     return () => clearInterval(timer);
   }, [playing, speed, candles.length, candles]);
 
+  // 🔥 Auto search list
+  const list = market === "CRYPTO" ? CRYPTO_SYMBOLS : FOREX_SYMBOLS;
+  const filtered = list.filter((s) =>
+    s.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📈 Bar Replay (Crypto Live)</h1>
+      <h1 className="text-2xl font-bold mb-4">📈 Bar Replay + Backtest</h1>
 
       {/* Controls */}
       <div className="bg-white p-4 rounded-xl shadow mb-4 grid gap-3">
-        <div className="grid md:grid-cols-4 gap-3">
+        <div className="grid md:grid-cols-5 gap-3">
+          {/* Market */}
+          <select
+            className="border p-2 rounded"
+            value={market}
+            onChange={(e) => {
+              const newMarket = e.target.value as "CRYPTO" | "FOREX";
+              setMarket(newMarket);
+
+              if (newMarket === "CRYPTO") setSymbol("BTCUSDT");
+              else setSymbol("EURUSD");
+
+              setSearch("");
+              setCandles([]);
+              setVisibleIndex(50);
+              setPlaying(false);
+            }}
+          >
+            <option value="CRYPTO">Crypto</option>
+            <option value="FOREX">Forex</option>
+          </select>
+
+          {/* Search */}
           <input
+            className="border p-2 rounded"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search symbol..."
+          />
+
+          {/* Symbol dropdown */}
+          <select
             className="border p-2 rounded"
             value={symbol}
             onChange={(e) => setSymbol(e.target.value)}
-            placeholder="Symbol (BTCUSDT)"
-          />
+          >
+            {filtered.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
 
+          {/* Interval */}
           <select
             className="border p-2 rounded"
             value={interval}
@@ -148,6 +218,16 @@ export default function Replay() {
             <option value="1d">1d</option>
           </select>
 
+          {/* Load */}
+          <button
+            onClick={fetchCandles}
+            className="bg-black text-white py-2 rounded"
+          >
+            Load Data
+          </button>
+        </div>
+
+        <div className="flex gap-3 flex-wrap">
           <select
             className="border p-2 rounded"
             value={speed}
@@ -160,15 +240,6 @@ export default function Replay() {
           </select>
 
           <button
-            onClick={fetchCandles}
-            className="bg-black text-white py-2 rounded"
-          >
-            Load Data
-          </button>
-        </div>
-
-        <div className="flex gap-3 flex-wrap">
-          <button
             onClick={() => setPlaying(!playing)}
             className="bg-blue-600 text-white px-4 py-2 rounded"
             disabled={!candles.length}
@@ -177,7 +248,9 @@ export default function Replay() {
           </button>
 
           <button
-            onClick={() => setVisibleIndex((prev) => Math.min(prev + 1, candles.length))}
+            onClick={() =>
+              setVisibleIndex((prev) => Math.min(prev + 1, candles.length))
+            }
             className="bg-gray-600 text-white px-4 py-2 rounded"
             disabled={!candles.length}
           >
@@ -196,6 +269,13 @@ export default function Replay() {
             Reset
           </button>
         </div>
+
+        {market === "FOREX" && (
+          <p className="text-sm text-orange-600">
+            ⚠ Forex real candles not supported by Binance. Next build we will
+            connect Forex API.
+          </p>
+        )}
       </div>
 
       {/* Chart */}
