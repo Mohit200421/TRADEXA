@@ -92,6 +92,11 @@ const tradeSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    screenshotUrl: {
+      type: String,
+      default: "",
+    },
+    
   },
   { timestamps: true }
 );

@@ -1,5 +1,6 @@
 const Trade = require("../models/Trade");
 
+
 // Helper: calculate PnL + R-multiple (basic)
 const calculateTradeMetrics = ({ side, entry, stopLoss, takeProfit, quantity }) => {
   const risk = Math.abs(entry - stopLoss);
