@@ -6,6 +6,8 @@ import { Toaster } from "react-hot-toast";
 import Trades from "./pages/Trades";
 import Reviews from "./pages/Reviews";
 import ReplayBacktest from "./pages/ReplayBacktest";
+import Replay from "./pages/Replay";
+
 
 
 
@@ -22,6 +24,8 @@ export default function App() {
         <Route path="/trades" element={<Trades />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/replay" element={<ReplayBacktest />} />
+        <Route path="/replay" element={<Replay />} />
+
 
 
 
