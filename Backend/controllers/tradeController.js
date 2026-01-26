@@ -196,3 +196,23 @@ exports.getAnalyticsSummary = async (req, res) => {
     res.status(500).json({ message: "Analytics error" });
   }
 };
+
+exports.getEquityCurve = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user.id }).sort({ createdAt: 1 });
+
+    let equity = 0;
+    const curve = trades.map((t) => {
+      equity += t.pnl || 0;
+      return {
+        date: t.createdAt.toISOString().slice(0, 10),
+        equity,
+        pnl: t.pnl || 0,
+      };
+    });
+
+    res.json(curve);
+  } catch (err) {
+    res.status(500).json({ message: "Equity curve error" });
+  }
+};

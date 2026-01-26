@@ -8,6 +8,7 @@ const {
   updateTrade,
   deleteTrade,
   getAnalyticsSummary, // ✅ ADD THIS
+  getEquityCurve,
 } = require("../controllers/tradeController");
 
 const router = express.Router();
@@ -17,6 +18,8 @@ router.use(protect);
 
 // ✅ Analytics route (must be above /:id)
 router.get("/analytics/summary", getAnalyticsSummary);
+
+router.get("/analytics/equity-curve", getEquityCurve);
 
 // Trades CRUD
 router.route("/").post(createTrade).get(getTrades);
