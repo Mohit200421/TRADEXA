@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getReviews, saveReview, getReviewDates } from "../services/reviewService";
 import ReviewCalendar from "../components/ReviewCalendar";
+import { exportReviewsPDF } from "../services/reviewService";
+
 
 export default function Reviews() {
   const [type, setType] = useState("DAILY");
@@ -90,9 +92,37 @@ export default function Reviews() {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const res = await exportReviewsPDF(type);
+  
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+  
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `reviews-${type}.pdf`;
+      a.click();
+  
+      window.URL.revokeObjectURL(url);
+  
+      toast.success("PDF Downloaded ✅");
+    } catch {
+      toast.error("PDF export failed ❌");
+    }
+  };
+  
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Review System</h1>
+      <button
+  onClick={handleExportPDF}
+  className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
+>
+  Export Reviews PDF
+</button>
+
 
       {/* ✅ Calendar + Streak */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">

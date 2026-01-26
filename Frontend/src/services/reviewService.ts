@@ -7,3 +7,9 @@ export const getReviews = (type?: string) =>
 
 export const getReviewDates = (type?: string) =>
   API.get("/api/reviews/dates", { params: { type } });
+
+export const exportReviewsPDF = (type?: string) =>
+  API.get("/api/reviews/export/pdf", {
+    params: { type },
+    responseType: "blob",
+  });
