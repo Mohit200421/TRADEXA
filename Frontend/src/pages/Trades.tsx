@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { createTrade, getTrades, deleteTrade } from "../services/tradeService";
 import { uploadImage } from "../services/uploadService";
+import { exportTradesCSV } from "../services/tradeService";
+
 
 export default function Trades() {
   const [trades, setTrades] = useState<any[]>([]);
@@ -113,9 +115,39 @@ setForm((prev) => ({
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const res = await exportTradesCSV();
+  
+      const blob = new Blob([res.data], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+  
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "trades.csv";
+      a.click();
+  
+      window.URL.revokeObjectURL(url);
+  
+      toast.success("CSV Downloaded ✅");
+    } catch (err: any) {
+      toast.error("Export failed ❌");
+    }
+  };
+  
+  
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Trades Journal</h1>
+
+      <button
+  onClick={handleExportCSV}
+  className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
+>
+  Export CSV
+</button>
+
 
       {/* Add Trade Form */}
       <form

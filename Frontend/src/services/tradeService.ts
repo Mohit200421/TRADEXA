@@ -16,3 +16,8 @@ export const getMonthlyAnalytics = () => API.get("/api/trades/analytics/monthly"
 
 
 export const getAdvancedAnalytics = () => API.get("/api/trades/analytics/advanced");
+
+export const getTagAnalytics = () => API.get("/api/trades/analytics/tags");
+
+export const exportTradesCSV = () =>
+  API.get("/api/trades/export/csv", { responseType: "blob" });

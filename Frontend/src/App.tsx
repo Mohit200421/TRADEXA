@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import { Toaster } from "react-hot-toast";
 import Trades from "./pages/Trades";
+import Reviews from "./pages/Reviews";
 
 
 export default function App() {
@@ -17,6 +18,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/trades" element={<Trades />} />
+        <Route path="/reviews" element={<Reviews />} />
+
 
 
         {/* fallback */}

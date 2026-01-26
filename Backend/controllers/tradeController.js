@@ -298,3 +298,96 @@ exports.getAdvancedAnalytics = async (req, res) => {
     res.status(500).json({ message: "Advanced analytics error" });
   }
 };
+
+exports.getTagAnalytics = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user.id });
+
+    const tagStats = {};
+    const mistakeStats = {};
+
+    trades.forEach((t) => {
+      const pnl = t.pnl || 0;
+
+      // Tags (array)
+      const tags = Array.isArray(t.tags) ? t.tags : [];
+      tags.forEach((tag) => {
+        const key = tag.trim().toLowerCase();
+        if (!key) return;
+
+        if (!tagStats[key]) tagStats[key] = { tag: key, pnl: 0, trades: 0 };
+        tagStats[key].pnl += pnl;
+        tagStats[key].trades += 1;
+      });
+
+      // Mistakes (string / array)
+      const mistakes = Array.isArray(t.mistakes)
+        ? t.mistakes
+        : t.mistakes
+        ? [t.mistakes]
+        : [];
+
+      mistakes.forEach((m) => {
+        const key = String(m).trim().toLowerCase();
+        if (!key) return;
+
+        if (!mistakeStats[key])
+          mistakeStats[key] = { mistake: key, count: 0 };
+
+        mistakeStats[key].count += 1;
+      });
+    });
+
+    const tagsResult = Object.values(tagStats).sort((a, b) => b.pnl - a.pnl);
+    const mistakesResult = Object.values(mistakeStats).sort(
+      (a, b) => b.count - a.count
+    );
+
+    res.json({
+      tags: tagsResult,
+      mistakes: mistakesResult,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Tag analytics error" });
+  }
+};
+
+exports.exportTradesCSV = async (req, res) => {
+  try {
+    const trades = await Trade.find({ user: req.user.id }).sort({ createdAt: -1 });
+
+    const headers = [
+      "symbol",
+      "side",
+      "entry",
+      "stopLoss",
+      "takeProfit",
+      "quantity",
+      "pnl",
+      "rMultiple",
+      "notes",
+      "screenshotUrl",
+      "createdAt",
+    ];
+
+    let csv = headers.join(",") + "\n";
+
+    trades.forEach((t) => {
+      const row = headers.map((h) => {
+        let value = t[h] ?? "";
+
+        // escape commas + quotes
+        value = String(value).replace(/"/g, '""');
+        return `"${value}"`;
+      });
+
+      csv += row.join(",") + "\n";
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=trades.csv");
+    res.status(200).send(csv);
+  } catch (error) {
+    res.status(500).json({ message: "CSV export failed" });
+  }
+};
