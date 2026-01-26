@@ -1,111 +1,192 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { createChart } from "lightweight-charts";
 
 export default function Replay() {
-  const [allCandles, setAllCandles] = useState<any[]>([]);
-  const [visible, setVisible] = useState<any[]>([]);
-  const [index, setIndex] = useState(30);
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const candleSeriesRef = useRef<any>(null);
+  const chartInstanceRef = useRef<any>(null);
+
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [interval, setIntervalValue] = useState("1h");
+  const [candles, setCandles] = useState<any[]>([]);
+  const [visibleIndex, setVisibleIndex] = useState(50);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState(800);
 
-  // ✅ Dummy Candles Generator (for now)
-  const generateCandles = () => {
-    const data = [];
-    let price = 100;
+  // ✅ Fetch candles from Binance
+  const fetchCandles = async () => {
+    try {
+      setPlaying(false);
+      toast.loading("Loading candles...", { id: "load" });
 
-    for (let i = 1; i <= 200; i++) {
-      price += Math.random() * 4 - 2; // random move
-      data.push({
-        time: `C${i}`,
-        price: Number(price.toFixed(2)),
-      });
+      const url = `https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=500`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        toast.error("Invalid Symbol ❌");
+        toast.dismiss("load");
+        return;
+      }
+
+      const formatted = data.map((c: any) => ({
+        time: c[0] / 1000,
+        open: Number(c[1]),
+        high: Number(c[2]),
+        low: Number(c[3]),
+        close: Number(c[4]),
+      }));
+
+      setCandles(formatted);
+      setVisibleIndex(50);
+
+      toast.success("Candles loaded ✅", { id: "load" });
+    } catch (err) {
+      toast.error("Failed to load candles ❌", { id: "load" });
     }
-    return data;
   };
 
+  // ✅ Setup chart
   useEffect(() => {
-    const candles = generateCandles();
-    setAllCandles(candles);
-    setVisible(candles.slice(0, 30));
+    if (!chartRef.current) return;
+
+    const chart = createChart(chartRef.current, {
+      width: chartRef.current.clientWidth,
+      height: 450,
+      layout: {
+        background: { color: "#ffffff" },
+        textColor: "#000",
+      },
+      grid: {
+        vertLines: { color: "#eee" },
+        horzLines: { color: "#eee" },
+      },
+    });
+
+    const candleSeries = chart.addCandlestickSeries();
+
+    chartInstanceRef.current = chart;
+    candleSeriesRef.current = candleSeries;
+
+    const handleResize = () => {
+      chart.applyOptions({ width: chartRef.current?.clientWidth || 800 });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
   }, []);
 
-  // ✅ Play Mode
+  // ✅ Update visible candles
+  useEffect(() => {
+    if (!candles.length) return;
+
+    const slice = candles.slice(0, visibleIndex);
+    candleSeriesRef.current?.setData(slice);
+    chartInstanceRef.current?.timeScale().fitContent();
+  }, [candles, visibleIndex]);
+
+  // ✅ Play replay
   useEffect(() => {
     if (!playing) return;
 
     const timer = setInterval(() => {
-      setIndex((prev) => prev + 1);
-    }, 800);
+      setVisibleIndex((prev) => {
+        if (prev >= candles.length) {
+          setPlaying(false);
+          toast.success("Replay finished ✅");
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, speed);
 
     return () => clearInterval(timer);
-  }, [playing]);
-
-  useEffect(() => {
-    if (allCandles.length > 0 && index < allCandles.length) {
-      setVisible(allCandles.slice(0, index));
-    }
-    if (index >= allCandles.length) {
-      setPlaying(false);
-      toast.success("Replay Finished ✅");
-    }
-  }, [index]);
-
-  const handleNext = () => {
-    if (index < allCandles.length) setIndex(index + 1);
-  };
-
-  const handleReset = () => {
-    setIndex(30);
-    setVisible(allCandles.slice(0, 30));
-    setPlaying(false);
-  };
+  }, [playing, speed, candles.length]);
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">📈 Bar Replay</h1>
+      <h1 className="text-2xl font-bold mb-4">📈 Bar Replay (Crypto Live)</h1>
 
-      <div className="bg-white p-4 rounded-xl shadow">
-        <div className="flex gap-3 mb-4">
+      {/* Controls */}
+      <div className="bg-white p-4 rounded-xl shadow mb-4 grid gap-3">
+        <div className="grid md:grid-cols-4 gap-3">
+          <input
+            className="border p-2 rounded"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+            placeholder="Symbol (BTCUSDT)"
+          />
+
+          <select
+            className="border p-2 rounded"
+            value={interval}
+            onChange={(e) => setIntervalValue(e.target.value)}
+          >
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+
+          <select
+            className="border p-2 rounded"
+            value={speed}
+            onChange={(e) => setSpeed(Number(e.target.value))}
+          >
+            <option value={1200}>Slow</option>
+            <option value={800}>Normal</option>
+            <option value={300}>Fast</option>
+            <option value={100}>Ultra Fast</option>
+          </select>
+
+          <button
+            onClick={fetchCandles}
+            className="bg-black text-white py-2 rounded"
+          >
+            Load Data
+          </button>
+        </div>
+
+        <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => setPlaying(!playing)}
-            className="bg-black text-white px-4 py-2 rounded"
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+            disabled={!candles.length}
           >
             {playing ? "Pause" : "Play"}
           </button>
 
           <button
-            onClick={handleNext}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            onClick={() => setVisibleIndex((prev) => prev + 1)}
+            className="bg-gray-600 text-white px-4 py-2 rounded"
+            disabled={!candles.length}
           >
             Next Candle
           </button>
 
           <button
-            onClick={handleReset}
-            className="bg-gray-600 text-white px-4 py-2 rounded"
+            onClick={() => {
+              setPlaying(false);
+              setVisibleIndex(50);
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded"
+            disabled={!candles.length}
           >
             Reset
           </button>
         </div>
-
-        <div style={{ width: "100%", height: 350 }}>
-          <ResponsiveContainer>
-            <LineChart data={visible}>
-              <XAxis dataKey="time" hide />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="price" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
       </div>
+
+      {/* Chart */}
+      <div ref={chartRef} className="bg-white rounded-xl shadow border" />
     </div>
   );
 }
