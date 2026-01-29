@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Eye, EyeOff, LogIn, Mail, Lock, TrendingUp, BarChart3, Shield, Users } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  LogIn,
+  Mail,
+  Lock,
+  TrendingUp,
+  BarChart3,
+  Shield,
+  Users,
+} from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -18,24 +28,29 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!form.email || !form.password) {
       toast.error("Please fill in all fields");
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      const res = await API.post("/api/auth/login", form);
+      // ✅ FIX: removed extra /api
+      const res = await API.post("/auth/login", form);
+
       localStorage.setItem("token", res.data.token);
       if (res.data.user) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
       }
+
       toast.success("Login Successful! 🎉");
       navigate("/dashboard");
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Login failed. Please check your credentials.";
+      const errorMessage =
+        err.response?.data?.message ||
+        "Login failed. Please check your credentials.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -46,23 +61,25 @@ export default function Login() {
     {
       icon: <BarChart3 className="w-8 h-8" />,
       title: "Advanced Analytics",
-      description: "Track PnL, win rate, and risk metrics with professional dashboards"
+      description:
+        "Track PnL, win rate, and risk metrics with professional dashboards",
     },
     {
       icon: <TrendingUp className="w-8 h-8" />,
       title: "Trade Replay",
-      description: "Replay market scenarios and test your strategies"
+      description: "Replay market scenarios and test your strategies",
     },
     {
       icon: <Shield className="w-8 h-8" />,
       title: "Risk Management",
-      description: "Monitor drawdowns and manage multiple accounts safely"
+      description: "Monitor drawdowns and manage multiple accounts safely",
     },
     {
       icon: <Users className="w-8 h-8" />,
       title: "Community Insights",
-      description: "Learn from successful traders and improve your edge"
-    }
+      description:
+        "Learn from successful traders and improve your edge",
+    },
   ];
 
   return (
@@ -70,7 +87,7 @@ export default function Login() {
       {/* Left Side - Brand & Features */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-cyan-500 p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
-        
+
         <div className="relative z-10 flex flex-col justify-between h-full">
           {/* Logo */}
           <div>
@@ -79,8 +96,12 @@ export default function Login() {
                 <TrendingUp className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">TradeFX Pro</h1>
-                <p className="text-blue-100 text-sm">Professional Trading Journal</p>
+                <h1 className="text-2xl font-bold text-white">
+                  TradeFX Pro
+                </h1>
+                <p className="text-blue-100 text-sm">
+                  Professional Trading Journal
+                </p>
               </div>
             </Link>
           </div>
@@ -92,16 +113,26 @@ export default function Login() {
                 Elevate Your Trading Journey
               </h2>
               <p className="text-blue-100">
-                Join thousands of successful traders who use TradeFX to track, analyze, and improve their performance.
+                Join thousands of successful traders who use TradeFX
+                to track, analyze, and improve their performance.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
               {features.map((feature, index) => (
-                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                  <div className="text-white mb-3">{feature.icon}</div>
-                  <h3 className="font-semibold text-white text-sm mb-1">{feature.title}</h3>
-                  <p className="text-blue-100 text-xs">{feature.description}</p>
+                <div
+                  key={index}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20"
+                >
+                  <div className="text-white mb-3">
+                    {feature.icon}
+                  </div>
+                  <h3 className="font-semibold text-white text-sm mb-1">
+                    {feature.title}
+                  </h3>
+                  <p className="text-blue-100 text-xs">
+                    {feature.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -109,8 +140,13 @@ export default function Login() {
 
           {/* Footer */}
           <div className="text-blue-100 text-sm">
-            <p>© {new Date().getFullYear()} TradeFX. All rights reserved.</p>
-            <p className="text-xs mt-1">Professional Trading Analytics Platform</p>
+            <p>
+              © {new Date().getFullYear()} TradeFX. All rights
+              reserved.
+            </p>
+            <p className="text-xs mt-1">
+              Professional Trading Analytics Platform
+            </p>
           </div>
         </div>
       </div>
@@ -125,8 +161,12 @@ export default function Login() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">TradeFX Pro</h1>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Professional Trading Journal</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  TradeFX Pro
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Professional Trading Journal
+                </p>
               </div>
             </Link>
           </div>
@@ -134,8 +174,12 @@ export default function Login() {
           {/* Login Card */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
-              <p className="text-gray-600 dark:text-gray-300">Sign in to continue to your trading journal</p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Welcome Back
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300">
+                Sign in to continue to your trading journal
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -181,17 +225,12 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div></div>
-                  <Link 
-                    to="/forgot-password" 
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
               </div>
 
@@ -215,15 +254,8 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Divider */}
-            <div className="flex items-center my-8">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-              <span className="px-4 text-sm text-gray-500 dark:text-gray-400">New to TradeFX?</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
-
             {/* Register Link */}
-            <div className="text-center">
+            <div className="text-center mt-8">
               <Link
                 to="/register"
                 className="inline-block w-full py-3 bg-transparent border-2 border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl font-medium transition-all"
@@ -236,7 +268,10 @@ export default function Login() {
           {/* Mobile Footer */}
           <div className="lg:hidden mt-8 text-center">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              <p>© {new Date().getFullYear()} TradeFX. All rights reserved.</p>
+              <p>
+                © {new Date().getFullYear()} TradeFX. All rights
+                reserved.
+              </p>
             </div>
           </div>
         </div>

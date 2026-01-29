@@ -2,98 +2,92 @@ const mongoose = require("mongoose");
 
 const tradeSchema = new mongoose.Schema(
   {
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
-    accountName: {
-      type: String,
-      default: "Main",
-      trim: true,
-    },
-
-    date: {
-      type: Date,
-      default: Date.now,
-    },
-
+    /* ---------- Core Trade Info ---------- */
     symbol: {
       type: String,
       required: true,
-      trim: true,
       uppercase: true,
+      trim: true,
+      index: true,
     },
 
-    side: {
+    type: {
       type: String,
-      enum: ["BUY", "SELL"],
+      enum: ["LONG", "SHORT"],
       required: true,
     },
 
-    entry: {
+    lotSize: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    /* ---------- Prices ---------- */
+    entryPrice: {
       type: Number,
       required: true,
     },
 
-    stopLoss: {
+    exitPrice: {
       type: Number,
+      default: null,
+    },
+
+    /* ---------- Dates ---------- */
+    entryDate: {
+      type: Date,
       required: true,
+      index: true,
     },
 
-    takeProfit: {
+    exitDate: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    /* ---------- Calculated Metrics ---------- */
+    pips: {
       type: Number,
-      required: true,
-    },
-
-    quantity: {
-      type: Number,
-      default: 1,
-    },
-
-    status: {
-      type: String,
-      enum: ["WIN", "LOSS", "BREAKEVEN", "RUNNING"],
-      default: "RUNNING",
-    },
-
-    notes: {
-      type: String,
-      default: "",
-    },
-
-    tags: {
-      type: [String],
-      default: [],
-    },
-
-    emotions: {
-      type: [String],
-      default: [],
-    },
-
-    mistakes: {
-      type: [String],
-      default: [],
-    },
-
-    screenshotUrl: {
-      type: String,
-      default: "",
+      default: 0,
     },
 
     pnl: {
       type: Number,
       default: 0,
+      index: true,
     },
 
-    rMultiple: {
-      type: Number,
-      default: 0,
+    status: {
+      type: String,
+      enum: ["OPEN", "CLOSED"],
+      default: "OPEN",
+      index: true,
+    },
+
+    /* ---------- Journal ---------- */
+    notes: {
+      type: String,
+      trim: true,
+      default: "",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // createdAt, updatedAt
+  }
 );
+
+/* ---------- Indexes for Dashboard Performance ---------- */
+tradeSchema.index({ userId: 1, createdAt: -1 });
+tradeSchema.index({ userId: 1, exitDate: -1 });
+tradeSchema.index({ userId: 1, status: 1 });
 
 module.exports = mongoose.model("Trade", tradeSchema);

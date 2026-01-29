@@ -172,48 +172,30 @@ export default function Replay() {
 
   const chartApiRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-
   const emaSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-
   const rsiChartApiRef = useRef<IChartApi | null>(null);
   const rsiSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
-
-  // drawings: we keep one line-series per drawing (simple approach)
   const drawingSeriesMapRef = useRef<Record<string, ISeriesApi<"Line">>>({});
 
   /* -------------------- State -------------------- */
   const [market, setMarket] = useState<MarketType>("CRYPTO");
   const [symbolInput, setSymbolInput] = useState("BTCUSDT");
   const [interval, setIntervalValue] = useState("1D");
-
   const [candles, setCandles] = useState<CandlestickData[]>([]);
   const [visibleIndex, setVisibleIndex] = useState(80);
-
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(400);
-
   const [isTyping, setIsTyping] = useState(false);
-
-  // UI
   const [chartSettingsOpen, setChartSettingsOpen] = useState(false);
-
   const [indicatorsOpen, setIndicatorsOpen] = useState(false);
   const [indicatorSettingsOpen, setIndicatorSettingsOpen] = useState(false);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings, setSettings] = useState<ChartSettings>(() => loadSettings());
   const [indicators, setIndicators] = useState<IndicatorConfig>(() => DEFAULT_INDICATORS);
-
-  // drawings
   const [activeTool, setActiveTool] = useState<DrawingTool>("cursor");
   const [drawings, setDrawings] = useState<Drawing[]>([]);
-  const [pendingPoint, setPendingPoint] = useState<{ time: UTCTimestamp; price: number } | null>(
-    null
-  );
-
-  // select drawing
+  const [pendingPoint, setPendingPoint] = useState<{ time: UTCTimestamp; price: number } | null>(null);
   const [selectedDrawingId, setSelectedDrawingId] = useState<string | null>(null);
-
-  // right click menu
   const [ctxMenu, setCtxMenu] = useState<{ open: boolean; x: number; y: number }>({
     open: false,
     x: 0,
@@ -235,6 +217,9 @@ export default function Replay() {
   }, [candles, visibleIndex]);
 
   const showDropdown = isTyping && suggestions.length > 1;
+
+  /* -------------------- Mobile Detection -------------------- */
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   /* -------------------- Fetch Candles -------------------- */
   const fetchCryptoCandles = async (symbol: string) => {
@@ -331,13 +316,13 @@ export default function Replay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [symbolInput, interval, market]);
 
-  /* -------------------- Main Chart init -------------------- */
+  /* -------------------- Chart Initialization -------------------- */
   useEffect(() => {
     if (!chartRef.current) return;
 
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
-      height: 560,
+      height: isMobile ? 400 : 560,
       layout: {
         background: { color: settings.background },
         textColor: settings.textColor,
@@ -373,9 +358,14 @@ export default function Replay() {
     chartApiRef.current = chart;
     candleSeriesRef.current = candleSeries;
 
-    const handleResize = () => chart.applyOptions({ width: chartRef.current?.clientWidth || 900 });
-    window.addEventListener("resize", handleResize);
+    const handleResize = () => {
+      chart.applyOptions({ 
+        width: chartRef.current?.clientWidth || 900,
+        height: isMobile ? 400 : 560 
+      });
+    };
 
+    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
       chart.remove();
@@ -383,13 +373,12 @@ export default function Replay() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* -------------------- RSI Chart init -------------------- */
   useEffect(() => {
-    if (!rsiChartRef.current) return;
+    if (!rsiChartRef.current || !indicators.rsi.enabled) return;
 
     const rsiChart = createChart(rsiChartRef.current, {
       width: rsiChartRef.current.clientWidth,
-      height: 180,
+      height: 150,
       layout: {
         background: { color: settings.background },
         textColor: settings.textColor,
@@ -424,9 +413,9 @@ export default function Replay() {
       rsiChart.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [indicators.rsi.enabled]);
 
-  /* -------------------- Apply Chart Settings -------------------- */
+  /* -------------------- Apply Settings -------------------- */
   useEffect(() => {
     const chart = chartApiRef.current;
     const candle = candleSeriesRef.current;
@@ -477,24 +466,20 @@ export default function Replay() {
     return () => clearInterval(timer);
   }, [playing, speed, candles.length]);
 
-  /* -------------------- Update Candle Slice -------------------- */
   useEffect(() => {
     if (!candles.length) return;
 
     const slice = candles.slice(0, Math.min(visibleIndex, candles.length));
     candleSeriesRef.current?.setData(slice);
     chartApiRef.current?.timeScale().scrollToRealTime();
-
     updateIndicators(slice);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, visibleIndex, indicators]);
 
-  /* -------------------- Indicators Engine -------------------- */
   const updateIndicators = (slice: CandlestickData[]) => {
     if (!slice.length) return;
     const closes = slice.map((c) => c.close);
 
-    // EMA
     if (!indicators.ema.enabled) {
       if (emaSeriesRef.current) {
         chartApiRef.current?.removeSeries(emaSeriesRef.current);
@@ -518,16 +503,13 @@ export default function Replay() {
       emaSeriesRef.current.setData(emaData);
     }
 
-    // RSI
     if (!indicators.rsi.enabled) {
       rsiSeriesRef.current?.setData([]);
       return;
     }
 
     rsiSeriesRef.current?.applyOptions({ color: indicators.rsi.color });
-
     const rsiArr = calcRSI(closes, indicators.rsi.length);
-
     const rsiData: LineData[] = slice
       .map((c, i) => ({
         time: c.time,
@@ -543,884 +525,491 @@ export default function Replay() {
     toast.success("Indicators cleared ✅");
   };
 
-  /* -------------------- Crosshair Sync (Main ↔ RSI) -------------------- */
-  useEffect(() => {
-    const mainChart = chartApiRef.current;
-    const rsiChart = rsiChartApiRef.current;
-    if (!mainChart || !rsiChart) return;
-
-    const mainTimeScale = mainChart.timeScale();
-    const rsiTimeScale = rsiChart.timeScale();
-
-    const mainSub = mainTimeScale.subscribeVisibleTimeRangeChange((range) => {
-      if (!range) return;
-      rsiTimeScale.setVisibleRange(range);
-    });
-
-    const rsiSub = rsiTimeScale.subscribeVisibleTimeRangeChange((range) => {
-      if (!range) return;
-      mainTimeScale.setVisibleRange(range);
-    });
-
-    const syncCrosshair = (_param: any) => {
-      // lightweight-charts doesn't allow setting crosshair programmatically
-      // range sync gives almost TV feel
-    };
-
-    mainChart.subscribeCrosshairMove(syncCrosshair);
-    rsiChart.subscribeCrosshairMove(syncCrosshair);
-
-    return () => {
-      // @ts-ignore
-      if (mainSub) mainSub();
-      // @ts-ignore
-      if (rsiSub) rsiSub();
-      mainChart.unsubscribeCrosshairMove(syncCrosshair);
-      rsiChart.unsubscribeCrosshairMove(syncCrosshair);
-    };
-  }, []);
-
-  /* -------------------- Right Click Menu -------------------- */
-  useEffect(() => {
-    const el = chartRef.current;
-    if (!el) return;
-
-    const onContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      setCtxMenu({ open: true, x: e.clientX, y: e.clientY });
-    };
-
-    const close = () => setCtxMenu((p) => ({ ...p, open: false }));
-
-    el.addEventListener("contextmenu", onContextMenu);
-    window.addEventListener("click", close);
-    window.addEventListener("scroll", close);
-
-    return () => {
-      el.removeEventListener("contextmenu", onContextMenu);
-      window.removeEventListener("click", close);
-      window.removeEventListener("scroll", close);
-    };
-  }, []);
-
-  /* -------------------- Drawing Helpers -------------------- */
-  function distancePointToLine(
-    px: number,
-    py: number,
-    ax: number,
-    ay: number,
-    bx: number,
-    by: number
-  ) {
-    const dx = bx - ax;
-    const dy = by - ay;
-
-    if (dx === 0 && dy === 0) {
-      return Math.hypot(px - ax, py - ay);
-    }
-
-    const t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy);
-    const tt = Math.max(0, Math.min(1, t));
-
-    const cx = ax + tt * dx;
-    const cy = ay + tt * dy;
-
-    return Math.hypot(px - cx, py - cy);
-  }
-
-  const findDrawingNearClick = (param: any) => {
-    const chart = chartApiRef.current;
-    const candle = candleSeriesRef.current;
-    if (!chart || !candle) return null;
-
-    if (!param?.point || !param?.time) return null;
-
-    const clickedPrice = param?.seriesPrices?.get(candle);
-    if (!clickedPrice) return null;
-
-    const time = param.time as UTCTimestamp;
-    const price = clickedPrice as number;
-
-    const x = chart.timeScale().timeToCoordinate(time);
-    const y = candle.priceToCoordinate(price);
-
-    if (x == null || y == null) return null;
-
-    let bestId: string | null = null;
-    let bestDist = Infinity;
-
-    const thresholdPx = 12;
-
-    for (const d of drawings) {
-      if (d.type === "hline") {
-        const p = d.points[0];
-        if (!p) continue;
-
-        const yy = candle.priceToCoordinate(p.price);
-        if (yy == null) continue;
-
-        const dist = Math.abs(y - yy);
-        if (dist < bestDist && dist <= thresholdPx) {
-          bestDist = dist;
-          bestId = d.id;
-        }
-        continue;
-      }
-
-      if (d.points.length >= 2) {
-        const [a, b] = d.points;
-
-        const ax = chart.timeScale().timeToCoordinate(a.time);
-        const ay = candle.priceToCoordinate(a.price);
-
-        const bx = chart.timeScale().timeToCoordinate(b.time);
-        const by = candle.priceToCoordinate(b.price);
-
-        if (ax == null || ay == null || bx == null || by == null) continue;
-
-        const dist = distancePointToLine(x, y, ax, ay, bx, by);
-        if (dist < bestDist && dist <= thresholdPx) {
-          bestDist = dist;
-          bestId = d.id;
-        }
-      }
-    }
-
-    return bestId;
-  };
-
-  /* -------------------- Drawings Engine -------------------- */
-  const removeAllDrawingSeries = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-
-    Object.values(drawingSeriesMapRef.current).forEach((s) => {
-      try {
-        chart.removeSeries(s);
-      } catch {}
-    });
-
-    drawingSeriesMapRef.current = {};
-  };
-
-  const redrawAll = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-
-    removeAllDrawingSeries();
-
-    drawings.forEach((d) => {
-      const isSelected = d.id === selectedDrawingId;
-
-      const series = chart.addLineSeries({
-        lineWidth: isSelected ? 3 : 2,
-        color: isSelected ? "#fbbf24" : "#38bdf8",
-      });
-
-      drawingSeriesMapRef.current[d.id] = series;
-
-      if (d.type === "hline") {
-        const p = d.points[0];
-        if (!p) return;
-
-        const leftTime = candles[Math.max(0, visibleIndex - 80)]?.time as UTCTimestamp;
-        const rightTime = candles[Math.max(0, visibleIndex - 1)]?.time as UTCTimestamp;
-
-        series.setData([
-          { time: leftTime, value: p.price },
-          { time: rightTime, value: p.price },
-        ]);
-        return;
-      }
-
-      if (d.points.length >= 2) {
-        const [a, b] = d.points;
-
-        series.setData([
-          { time: a.time, value: a.price },
-          { time: b.time, value: b.price },
-        ]);
-      }
-    });
-  };
-
-  useEffect(() => {
-    redrawAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawings, candles, visibleIndex, selectedDrawingId]);
-
-  /* -------------------- Chart Click Handler -------------------- */
-  useEffect(() => {
-    const chart = chartApiRef.current;
-    const candle = candleSeriesRef.current;
-    if (!chart || !candle) return;
-
-    const onClick = (param: any) => {
-      if (!param?.time) return;
-
-      // Cursor mode -> select drawings
-      if (activeTool === "cursor") {
-        const hitId = findDrawingNearClick(param);
-        if (hitId) {
-          setSelectedDrawingId(hitId);
-        } else {
-          setSelectedDrawingId(null);
-        }
-        return;
-      }
-
-      // drawing mode
-      const price = param?.seriesPrices?.get(candle);
-      if (!price) return;
-
-      const time = param.time as UTCTimestamp;
-
-      if (activeTool === "delete") {
-        setDrawings([]);
-        setSelectedDrawingId(null);
-        setPendingPoint(null);
-        toast.success("All drawings deleted ✅");
-        return;
-      }
-
-      // single click tools
-      if (activeTool === "hline") {
-        const id = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-        setDrawings((prev) => [...prev, { id, type: "hline", points: [{ time, price }] }]);
-        toast.success("Horizontal line added ✅");
-        return;
-      }
-
-      // two-click tools
-      const toolMap: Record<string, DrawingType> = {
-        trendline: "trendline",
-        ray: "ray",
-        rectangle: "rectangle",
-      };
-
-      const type = toolMap[activeTool];
-      if (!type) return;
-
-      if (!pendingPoint) {
-        setPendingPoint({ time, price });
-        toast("Select 2nd point...");
-        return;
-      }
-
-      const id = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-      setDrawings((prev) => [...prev, { id, type, points: [pendingPoint, { time, price }] }]);
-      setPendingPoint(null);
-      toast.success(`${type} added ✅`);
-    };
-
-    chart.subscribeClick(onClick);
-    return () => chart.unsubscribeClick(onClick);
-  }, [activeTool, pendingPoint, drawings]);
-
-  /* -------------------- Delete Key Support -------------------- */
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (selectedDrawingId && (e.key === "Delete" || e.key === "Backspace")) {
-        setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
-        setSelectedDrawingId(null);
-        toast.success("Drawing deleted ✅");
-      }
-
-      if (e.key === "Escape") {
-        setSelectedDrawingId(null);
-        setPendingPoint(null);
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedDrawingId]);
-
-  /* -------------------- Chart Controls (TradingView style) -------------------- */
-  const resetView = () => {
-    chartApiRef.current?.timeScale().fitContent();
-    rsiChartApiRef.current?.timeScale().fitContent();
-    toast.success("Chart view reset ✅");
-  };
-
-  const zoomIn = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-    chart.timeScale().zoomIn();
-  };
-
-  const zoomOut = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-    chart.timeScale().zoomOut();
-  };
-
-  const moveLeft = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-    chart.timeScale().scrollToPosition(-30, false);
-  };
-
-  const moveRight = () => {
-    const chart = chartApiRef.current;
-    if (!chart) return;
-    chart.timeScale().scrollToPosition(30, false);
-  };
-
-  /* -------------------- Render -------------------- */
-  return (
-    <div className="min-h-screen bg-[#0b1220] text-slate-200 pb-12">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-50 bg-[#070b14] border-b border-white/10 px-3 py-2 flex flex-wrap items-center gap-2">
-        <div className="font-bold text-base tracking-wide">TradeFX</div>
-
-        {/* Market */}
-        <select
-          className="bg-white/5 border border-white/10 px-3 py-2 rounded text-sm"
-          value={market}
-          onChange={(e) => {
-            const newMarket = e.target.value as MarketType;
-            setMarket(newMarket);
-            setCandles([]);
-            setVisibleIndex(80);
-            setPlaying(false);
-
-            if (newMarket === "CRYPTO") setSymbolInput("BTCUSDT");
-            else setSymbolInput("XAU/USD");
-          }}
-        >
-          <option value="FOREX">FOREX</option>
-          <option value="CRYPTO">CRYPTO</option>
-        </select>
-
-        {/* Symbol */}
-        <div className="relative">
-          <input
-            className="bg-white/5 border border-white/10 px-3 py-2 rounded text-sm w-[200px] outline-none focus:ring-2 focus:ring-sky-400/30"
-            value={symbolInput}
-            onChange={(e) => {
-              setSymbolInput(e.target.value);
-              setIsTyping(true);
-            }}
-            onBlur={() => setTimeout(() => setIsTyping(false), 150)}
-            placeholder={market === "CRYPTO" ? "BTCUSDT" : "XAU/USD"}
-          />
-
-          {showDropdown && (
-            <div className="absolute z-50 bg-[#0f172a] text-slate-200 border border-white/10 rounded shadow w-full mt-1 max-h-44 overflow-auto">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  onMouseDown={() => {
-                    setSymbolInput(s);
-                    setIsTyping(false);
-                  }}
-                  className="w-full text-left px-3 py-2 hover:bg-white/5 text-sm"
-                  type="button"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Interval */}
-        <select
-          className="bg-white/5 border border-white/10 px-3 py-2 rounded text-sm"
-          value={interval}
-          onChange={(e) => setIntervalValue(e.target.value)}
-        >
-          <option value="1m">1m</option>
-          <option value="5m">5m</option>
-          <option value="15m">15m</option>
-          <option value="1h">1h</option>
-          <option value="4h">4h</option>
-          <option value="1D">1D</option>
-        </select>
-
-        {/* Always Visible Chart Settings */}
-        <button
-          onClick={() => setChartSettingsOpen(true)}
-          className="bg-white/10 hover:bg-white/15 px-3 py-2 rounded text-sm"
-          title="Chart Settings"
-        >
-          ⚙ Chart Settings
-        </button>
-
-        {/* Single Indicators Button + Dropdown */}
-        <div className="relative">
+  /* -------------------- Mobile Drawing Tools -------------------- */
+  const DrawingToolsMobile = () => (
+    <div className="fixed bottom-20 right-4 z-40">
+      <div className="flex flex-col gap-2 bg-[#0f172a] border border-white/10 rounded-xl p-2 shadow-xl">
+        {[
+          { tool: "cursor", icon: "🖱️", label: "Cursor" },
+          { tool: "trendline", icon: "📈", label: "Trend" },
+          { tool: "ray", icon: "➡️", label: "Ray" },
+          { tool: "hline", icon: "➖", label: "H Line" },
+          { tool: "rectangle", icon: "▭", label: "Box" },
+          { tool: "delete", icon: "🗑️", label: "Delete" },
+        ].map(({ tool, icon, label }) => (
           <button
-            onClick={() => setIndicatorsOpen((p) => !p)}
-            className="bg-white/10 hover:bg-white/15 px-3 py-2 rounded text-sm"
-            title="Indicators"
+            key={tool}
+            onClick={() => setActiveTool(tool as DrawingTool)}
+            className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center text-sm ${
+              activeTool === tool ? "bg-sky-500/20 border border-sky-500/30" : "bg-white/5 hover:bg-white/10"
+            }`}
+            title={label}
           >
-            📊 Indicators ▾
+            <span className="text-lg">{icon}</span>
+            <span className="text-xs mt-1">{label}</span>
           </button>
+        ))}
+      </div>
+    </div>
+  );
 
-          {indicatorsOpen && (
-            <div className="absolute left-0 mt-2 w-[240px] bg-[#0f172a] border border-white/10 rounded-xl shadow-xl overflow-hidden z-[9999]">
-              <button
-                onClick={() => {
-                  setIndicators((p) => ({ ...p, ema: { ...p.ema, enabled: !p.ema.enabled } }));
-                }}
-                className="w-full text-left px-3 py-2 hover:bg-white/5 text-sm"
-              >
-                {indicators.ema.enabled ? "Remove EMA" : "Add EMA"}
-              </button>
-
-              <button
-                onClick={() => {
-                  setIndicators((p) => ({ ...p, rsi: { ...p.rsi, enabled: !p.rsi.enabled } }));
-                }}
-                className="w-full text-left px-3 py-2 hover:bg-white/5 text-sm"
-              >
-                {indicators.rsi.enabled ? "Remove RSI" : "Add RSI"}
-              </button>
-
-              <div className="h-[1px] bg-white/10" />
-
-              <button
-                onClick={() => {
-                  setIndicatorSettingsOpen(true);
-                  setIndicatorsOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 hover:bg-white/5 text-sm"
-              >
-                Indicator Settings…
-              </button>
-
-              <button
-                onClick={() => {
-                  clearIndicators();
-                  setIndicatorsOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 hover:bg-white/5 text-sm text-rose-300"
-              >
-                Clear Indicators
-              </button>
-            </div>
-          )}
+  return (
+    <div className="min-h-screen bg-[#0b1220] text-slate-200 pb-20 md:pb-12">
+      {/* Mobile Header */}
+      <div className="md:hidden sticky top-0 z-50 bg-[#070b14] border-b border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/5"
+            >
+              {mobileMenuOpen ? "✕" : "☰"}
+            </button>
+            <div className="font-bold text-base">TradeFX</div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPlaying((p) => !p)}
+              disabled={!candles.length}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${
+                playing 
+                  ? "bg-amber-600 hover:bg-amber-700" 
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              } disabled:opacity-50`}
+            >
+              {playing ? "⏸️" : "▶️"}
+            </button>
+          </div>
         </div>
 
-        {/* Replay controls */}
-        <div className="flex items-center gap-2 ml-auto flex-wrap">
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-[#0f172a] border-b border-white/10 px-4 py-3 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+                value={market}
+                onChange={(e) => {
+                  const newMarket = e.target.value as MarketType;
+                  setMarket(newMarket);
+                  if (newMarket === "CRYPTO") setSymbolInput("BTCUSDT");
+                  else setSymbolInput("XAU/USD");
+                }}
+              >
+                <option value="FOREX">FOREX</option>
+                <option value="CRYPTO">CRYPTO</option>
+              </select>
+
+              <select
+                className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+                value={interval}
+                onChange={(e) => setIntervalValue(e.target.value)}
+              >
+                <option value="1D">1D</option>
+                <option value="4h">4h</option>
+                <option value="1h">1h</option>
+                <option value="15m">15m</option>
+                <option value="5m">5m</option>
+                <option value="1m">1m</option>
+              </select>
+            </div>
+
+            <div className="relative">
+              <input
+                className="w-full bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+                value={symbolInput}
+                onChange={(e) => setSymbolInput(e.target.value)}
+                placeholder={market === "CRYPTO" ? "BTCUSDT" : "XAU/USD"}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setChartSettingsOpen(true)}
+                className="flex-1 bg-white/10 hover:bg-white/15 px-3 py-2 rounded-lg text-sm"
+              >
+                ⚙ Settings
+              </button>
+              <button
+                onClick={() => setIndicatorsOpen((p) => !p)}
+                className="flex-1 bg-white/10 hover:bg-white/15 px-3 py-2 rounded-lg text-sm"
+              >
+                📊 Indicators
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setVisibleIndex(80)}
+                className="flex-1 bg-rose-600 hover:bg-rose-700 px-3 py-2 rounded-lg text-sm font-semibold"
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setVisibleIndex((p) => Math.min(p + 1, candles.length))}
+                disabled={!candles.length}
+                className="flex-1 bg-white/10 hover:bg-white/15 px-3 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+              >
+                Next →
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-white/10">
+              <div className="text-xs text-slate-400 mb-2">Replay Speed</div>
+              <div className="flex gap-2">
+                {[1200, 600, 250, 100].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSpeed(s)}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm ${
+                      speed === s 
+                        ? "bg-sky-500 text-white" 
+                        : "bg-white/5 hover:bg-white/10"
+                    }`}
+                  >
+                    {s === 1200 ? "Slow" : s === 600 ? "Norm" : s === 250 ? "Fast" : "Ultra"}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:block sticky top-0 z-50 bg-[#070b14] border-b border-white/10 px-6 py-3">
+        <div className="flex items-center gap-4">
+          <div className="font-bold text-lg tracking-wide">TradeFX Chart Replay</div>
+
           <select
-            className="bg-white/5 border border-white/10 px-3 py-2 rounded text-sm"
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
+            className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+            value={market}
+            onChange={(e) => {
+              const newMarket = e.target.value as MarketType;
+              setMarket(newMarket);
+              if (newMarket === "CRYPTO") setSymbolInput("BTCUSDT");
+              else setSymbolInput("XAU/USD");
+            }}
           >
-            <option value={1200}>Slow</option>
-            <option value={600}>Normal</option>
-            <option value={250}>Fast</option>
-            <option value={100}>Ultra</option>
+            <option value="FOREX">FOREX</option>
+            <option value="CRYPTO">CRYPTO</option>
+          </select>
+
+          <div className="relative">
+            <input
+              className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm w-48"
+              value={symbolInput}
+              onChange={(e) => setSymbolInput(e.target.value)}
+              placeholder={market === "CRYPTO" ? "BTCUSDT" : "XAU/USD"}
+            />
+          </div>
+
+          <select
+            className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+            value={interval}
+            onChange={(e) => setIntervalValue(e.target.value)}
+          >
+            <option value="1m">1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1D">1D</option>
           </select>
 
           <button
-            onClick={() => setPlaying((p) => !p)}
-            disabled={!candles.length}
-            className="bg-emerald-600 hover:bg-emerald-700 px-4 py-2 rounded text-sm font-semibold disabled:opacity-50"
+            onClick={() => setChartSettingsOpen(true)}
+            className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm flex items-center gap-2"
           >
-            {playing ? "Pause" : "Play"}
+            ⚙ Settings
           </button>
 
           <button
-            onClick={() => setVisibleIndex((prev) => Math.min(prev + 1, candles.length))}
-            disabled={!candles.length}
-            className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded text-sm font-semibold disabled:opacity-50"
+            onClick={() => setIndicatorsOpen((p) => !p)}
+            className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm flex items-center gap-2"
           >
-            Next
+            📊 Indicators
           </button>
 
-          <button
-            onClick={() => {
-              setPlaying(false);
-              setVisibleIndex(Math.min(80, candles.length));
-            }}
-            disabled={!candles.length}
-            className="bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded text-sm font-semibold disabled:opacity-50"
-          >
-            Reset
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            <select
+              className="bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm"
+              value={speed}
+              onChange={(e) => setSpeed(Number(e.target.value))}
+            >
+              <option value={1200}>Slow</option>
+              <option value={600}>Normal</option>
+              <option value={250}>Fast</option>
+              <option value={100}>Ultra</option>
+            </select>
+
+            <button
+              onClick={() => setPlaying((p) => !p)}
+              disabled={!candles.length}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 ${
+                playing 
+                  ? "bg-amber-600 hover:bg-amber-700" 
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              } disabled:opacity-50`}
+            >
+              {playing ? (
+                <>
+                  <span>⏸️ Pause</span>
+                </>
+              ) : (
+                <>
+                  <span>▶️ Play</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() => setVisibleIndex((p) => Math.min(p + 1, candles.length))}
+              disabled={!candles.length}
+              className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              Next →
+            </button>
+
+            <button
+              onClick={() => setVisibleIndex(80)}
+              disabled={!candles.length}
+              className="bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Layout */}
-      <div className="flex">
-        {/* Left Toolbar (Drawing Tools) */}
-        <div className="w-14 bg-[#070b14] border-r border-white/10 text-slate-200 flex flex-col items-center py-3 gap-3">
-          <button
-            onClick={() => setActiveTool("cursor")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "cursor" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Cursor"
-          >
-            🖱️
-          </button>
-
-          <button
-            onClick={() => setActiveTool("trendline")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "trendline" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Trend Line"
-          >
-            📈
-          </button>
-
-          <button
-            onClick={() => setActiveTool("ray")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "ray" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Ray Line"
-          >
-            ➡️
-          </button>
-
-          <button
-            onClick={() => setActiveTool("hline")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "hline" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Horizontal Line"
-          >
-            ➖
-          </button>
-
-          <button
-            onClick={() => setActiveTool("rectangle")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "rectangle" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Rectangle (Box)"
-          >
-            ▭
-          </button>
-
-          <button
-            onClick={() => setActiveTool("delete")}
-            className={`w-9 h-9 rounded flex items-center justify-center ${
-              activeTool === "delete" ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
-            }`}
-            title="Delete all drawings"
-          >
-            🗑️
-          </button>
+      {/* Main Content */}
+      <div className="flex flex-col md:flex-row">
+        {/* Desktop Drawing Tools */}
+        <div className="hidden md:flex w-16 bg-[#070b14] border-r border-white/10 flex-col items-center py-6 gap-4">
+          {[
+            { tool: "cursor", icon: "🖱️", label: "Cursor" },
+            { tool: "trendline", icon: "📈", label: "Trend" },
+            { tool: "ray", icon: "➡️", label: "Ray" },
+            { tool: "hline", icon: "➖", label: "H Line" },
+            { tool: "rectangle", icon: "▭", label: "Box" },
+            { tool: "delete", icon: "🗑️", label: "Delete" },
+          ].map(({ tool, icon, label }) => (
+            <button
+              key={tool}
+              onClick={() => setActiveTool(tool as DrawingTool)}
+              className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center text-sm ${
+                activeTool === tool 
+                  ? "bg-sky-500/20 border border-sky-500/30" 
+                  : "bg-white/5 hover:bg-white/10"
+              }`}
+              title={label}
+            >
+              <span className="text-lg">{icon}</span>
+              <span className="text-xs mt-1">{label}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Chart + RSI Panel */}
-        <div className="flex-1 p-3">
-          {/* Chart Wrapper with TradingView Controls */}
-          <div className="relative bg-[#070b14] rounded-xl shadow border border-white/10 overflow-hidden">
+        {/* Chart Area */}
+        <div className="flex-1 p-3 md:p-6">
+          {/* Chart Container */}
+          <div className="bg-[#070b14] rounded-xl shadow-lg border border-white/10 overflow-hidden mb-4">
             <div ref={chartRef} />
-
-            {/* TradingView Floating Controls */}
-            <div className="absolute top-3 left-3 z-50 flex items-center gap-2">
-              <button
-                onClick={zoomOut}
-                className="w-9 h-9 rounded-lg bg-black/70 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
-                title="Zoom Out"
-              >
-                −
-              </button>
-
-              <button
-                onClick={zoomIn}
-                className="w-9 h-9 rounded-lg bg-black/70 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
-                title="Zoom In"
-              >
-                +
-              </button>
-
-              <button
-                onClick={moveLeft}
-                className="w-9 h-9 rounded-lg bg-black/70 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
-                title="Move Left"
-              >
-                ‹
-              </button>
-
-              <button
-                onClick={moveRight}
-                className="w-9 h-9 rounded-lg bg-black/70 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
-                title="Move Right"
-              >
-                ›
-              </button>
-
-              <button
-                onClick={resetView}
-                className="w-9 h-9 rounded-lg bg-black/70 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
-                title="Reset"
-              >
-                ⟳
-              </button>
+            
+            {/* Chart Controls */}
+            <div className="absolute top-4 left-4 z-30">
+              <div className="flex flex-col md:flex-row gap-2">
+                <button
+                  onClick={() => chartApiRef.current?.timeScale().zoomOut()}
+                  className="w-10 h-10 rounded-lg bg-black/80 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
+                >
+                  −
+                </button>
+                <button
+                  onClick={() => chartApiRef.current?.timeScale().zoomIn()}
+                  className="w-10 h-10 rounded-lg bg-black/80 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => chartApiRef.current?.timeScale().scrollToPosition(-30, false)}
+                  className="w-10 h-10 rounded-lg bg-black/80 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => chartApiRef.current?.timeScale().scrollToPosition(30, false)}
+                  className="w-10 h-10 rounded-lg bg-black/80 hover:bg-black/90 border border-white/10 text-white text-lg flex items-center justify-center"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* RSI Panel */}
+          {/* RSI Chart */}
           {indicators.rsi.enabled && (
-            <div className="mt-3 bg-[#070b14] rounded-xl shadow border border-white/10 overflow-hidden">
-              <div className="px-3 py-2 text-xs text-slate-400 border-b border-white/10">
+            <div className="bg-[#070b14] rounded-xl shadow-lg border border-white/10 overflow-hidden">
+              <div className="px-4 py-3 text-sm text-slate-400 border-b border-white/10">
                 RSI ({indicators.rsi.length})
               </div>
               <div ref={rsiChartRef} />
             </div>
           )}
 
-          {!candles.length && (
-            <div className="text-center text-slate-400 mt-6">
-              Loading chart automatically... ✅
+          {/* Current Stats */}
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-6 gap-2">
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">Time</div>
+              <div className="text-sm font-semibold">{formatCandleTime(currentCandle?.time as any)}</div>
             </div>
-          )}
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">Open</div>
+              <div className="text-sm font-semibold text-slate-100">
+                {currentCandle?.open?.toFixed?.(2) ?? "--"}
+              </div>
+            </div>
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">High</div>
+              <div className="text-sm font-semibold text-emerald-400">
+                {currentCandle?.high?.toFixed?.(2) ?? "--"}
+              </div>
+            </div>
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">Low</div>
+              <div className="text-sm font-semibold text-rose-400">
+                {currentCandle?.low?.toFixed?.(2) ?? "--"}
+              </div>
+            </div>
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">Close</div>
+              <div className="text-sm font-semibold text-slate-100">
+                {currentCandle?.close?.toFixed?.(2) ?? "--"}
+              </div>
+            </div>
+            <div className="bg-[#070b14] border border-white/10 rounded-lg p-3 text-center">
+              <div className="text-xs text-slate-400 mb-1">Progress</div>
+              <div className="text-sm font-semibold">
+                {Math.min(visibleIndex, candles.length)} / {candles.length || 0}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#070b14] border-t border-white/10 px-3 py-2 flex items-center gap-3 text-xs">
-        <div className="text-slate-400">
-          {market} • {symbolInput.toUpperCase()} • {interval}
-        </div>
+      {/* Mobile Drawing Tools */}
+      {isMobile && <DrawingToolsMobile />}
 
-        <div className="text-slate-300">
-          Time:{" "}
-          <span className="text-slate-100">{formatCandleTime(currentCandle?.time as any)}</span>
-        </div>
-
-        <div className="text-slate-300">
-          O: <span className="text-slate-100">{currentCandle?.open?.toFixed?.(2) ?? "--"}</span>
-        </div>
-        <div className="text-slate-300">
-          H: <span className="text-slate-100">{currentCandle?.high?.toFixed?.(2) ?? "--"}</span>
-        </div>
-        <div className="text-slate-300">
-          L: <span className="text-slate-100">{currentCandle?.low?.toFixed?.(2) ?? "--"}</span>
-        </div>
-        <div className="text-slate-300">
-          C: <span className="text-slate-100">{currentCandle?.close?.toFixed?.(2) ?? "--"}</span>
-        </div>
-
-        <div className="ml-auto text-slate-400">
-          {Math.min(visibleIndex, candles.length)} / {candles.length || 0}
+      {/* Mobile Bottom Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#070b14] border-t border-white/10 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="text-xs">
+            <div className="text-slate-400">{market} • {symbolInput.toUpperCase()}</div>
+            <div className="text-slate-300">{interval}</div>
+          </div>
+          <div className="text-xs text-slate-300">
+            {Math.min(visibleIndex, candles.length)} / {candles.length || 0}
+          </div>
         </div>
       </div>
 
-      {/* Right Click Menu */}
-      {ctxMenu.open && (
-        <div
-          className="fixed z-[9999] bg-[#0f172a] border border-white/10 rounded-xl shadow-xl w-[220px] overflow-hidden"
-          style={{ left: ctxMenu.x, top: ctxMenu.y }}
-        >
-          <button
-            onClick={() => {
-              setChartSettingsOpen(true);
-              setCtxMenu((p) => ({ ...p, open: false }));
-            }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-white/5"
-          >
-            Chart Settings…
-          </button>
-
-          <button
-            onClick={() => {
-              setIndicatorSettingsOpen(true);
-              setCtxMenu((p) => ({ ...p, open: false }));
-            }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-white/5"
-          >
-            Indicator Settings…
-          </button>
-
-          <div className="h-[1px] bg-white/10" />
-
-          {selectedDrawingId && (
-            <button
-              onClick={() => {
-                setDrawings((prev) => prev.filter((d) => d.id !== selectedDrawingId));
-                setSelectedDrawingId(null);
-                setCtxMenu((p) => ({ ...p, open: false }));
-                toast.success("Selected drawing deleted ✅");
-              }}
-              className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-rose-300"
-            >
-              Delete Selected Drawing
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              resetView();
-              setCtxMenu((p) => ({ ...p, open: false }));
-            }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-white/5"
-          >
-            Reset Chart View
-          </button>
-
-          <button
-            onClick={() => {
-              setDrawings([]);
-              setSelectedDrawingId(null);
-              setCtxMenu((p) => ({ ...p, open: false }));
-              toast.success("Drawings cleared ✅");
-            }}
-            className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 text-rose-300"
-          >
-            Clear Drawings
-          </button>
-        </div>
-      )}
-
+      {/* Modals */}
       {/* Chart Settings Modal */}
       {chartSettingsOpen && (
-        <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0b1220] border border-white/10 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <div className="font-semibold text-sm">Chart Settings</div>
+        <div className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-[#0b1220] border border-white/10 rounded-2xl shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-[#0b1220] px-6 py-4 border-b border-white/10 flex items-center justify-between">
+              <div className="font-semibold text-lg">Chart Settings</div>
               <button
                 onClick={() => setChartSettingsOpen(false)}
-                className="bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded text-xs"
+                className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm"
               >
                 Close
               </button>
             </div>
 
-            <div className="p-4 space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Background</div>
-                  <input
-                    type="color"
-                    value={settings.background}
-                    onChange={(e) => setSettings((p) => ({ ...p, background: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Text Color</div>
-                  <input
-                    type="color"
-                    value={settings.textColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, textColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Grid Color (rgba)</div>
-                  <input
-                    type="text"
-                    value={settings.gridColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, gridColor: e.target.value }))}
-                    className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-xs"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Border Color (rgba)</div>
-                  <input
-                    type="text"
-                    value={settings.borderColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, borderColor: e.target.value }))}
-                    className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-xs"
-                  />
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">
-                <div>
-                  <div className="font-semibold text-sm">Crosshair</div>
-                  <div className="text-xs text-slate-400">Show / hide crosshair</div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="text-sm font-medium">Colors</div>
+                  {[
+                    { label: "Background", key: "background" },
+                    { label: "Text", key: "textColor" },
+                    { label: "Grid", key: "gridColor" },
+                    { label: "Border", key: "borderColor" },
+                  ].map(({ label, key }) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <label className="text-sm text-slate-400">{label}</label>
+                      <input
+                        type="color"
+                        value={settings[key as keyof ChartSettings] as string}
+                        onChange={(e) =>
+                          setSettings((p) => ({ ...p, [key]: e.target.value }))
+                        }
+                        className="w-12 h-8 rounded bg-transparent border border-white/10"
+                      />
+                    </div>
+                  ))}
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.crosshair}
-                  onChange={(e) => setSettings((p) => ({ ...p, crosshair: e.target.checked }))}
-                />
+
+                <div className="space-y-4">
+                  <div className="text-sm font-medium">Candle Colors</div>
+                  {[
+                    { label: "Bull Body", key: "upColor" },
+                    { label: "Bull Wick", key: "wickUpColor" },
+                    { label: "Bull Border", key: "borderUpColor" },
+                    { label: "Bear Body", key: "downColor" },
+                    { label: "Bear Wick", key: "wickDownColor" },
+                    { label: "Bear Border", key: "borderDownColor" },
+                  ].map(({ label, key }) => (
+                    <div key={key} className="flex items-center justify-between">
+                      <label className="text-sm text-slate-400">{label}</label>
+                      <input
+                        type="color"
+                        value={settings[key as keyof ChartSettings] as string}
+                        onChange={(e) =>
+                          setSettings((p) => ({ ...p, [key]: e.target.value }))
+                        }
+                        className="w-12 h-8 rounded bg-transparent border border-white/10"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bull Body</div>
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                <div>
+                  <div className="font-medium">Crosshair</div>
+                  <div className="text-sm text-slate-400">Show crosshair on chart</div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
-                    type="color"
-                    value={settings.upColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, upColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
+                    type="checkbox"
+                    checked={settings.crosshair}
+                    onChange={(e) => setSettings((p) => ({ ...p, crosshair: e.target.checked }))}
+                    className="sr-only peer"
                   />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bull Wick</div>
-                  <input
-                    type="color"
-                    value={settings.wickUpColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, wickUpColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bull Border</div>
-                  <input
-                    type="color"
-                    value={settings.borderUpColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, borderUpColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bear Body</div>
-                  <input
-                    type="color"
-                    value={settings.downColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, downColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bear Wick</div>
-                  <input
-                    type="color"
-                    value={settings.wickDownColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, wickDownColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
-                </label>
-
-                <label className="space-y-1">
-                  <div className="text-xs text-slate-400">Bear Border</div>
-                  <input
-                    type="color"
-                    value={settings.borderDownColor}
-                    onChange={(e) => setSettings((p) => ({ ...p, borderDownColor: e.target.value }))}
-                    className="w-full h-10 rounded bg-transparent border border-white/10"
-                  />
+                  <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setSettings(DEFAULT_SETTINGS)}
-                  className="bg-white/10 hover:bg-white/15 px-3 py-2 rounded text-xs"
+                  className="flex-1 bg-white/10 hover:bg-white/15 px-4 py-3 rounded-lg text-sm"
                 >
-                  Reset Default
+                  Reset Defaults
                 </button>
-
                 <button
                   onClick={() => {
                     saveSettings(settings);
                     toast.success("Settings saved ✅");
                     setChartSettingsOpen(false);
                   }}
-                  className="bg-sky-500/20 border border-sky-500/30 hover:bg-sky-500/30 px-3 py-2 rounded text-xs"
+                  className="flex-1 bg-sky-500 hover:bg-sky-600 px-4 py-3 rounded-lg text-sm font-semibold"
                 >
-                  Save & Close
+                  Save & Apply
                 </button>
               </div>
             </div>
@@ -1428,146 +1017,83 @@ export default function Replay() {
         </div>
       )}
 
-      {/* Indicator Settings Modal */}
-      {indicatorSettingsOpen && (
-        <div className="fixed inset-0 z-[99999] bg-black/60 flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#0b1220] border border-white/10 rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <div className="font-semibold text-sm">Indicator Settings</div>
+      {/* Indicators Modal */}
+      {indicatorsOpen && (
+        <div className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-[#0b1220] border border-white/10 rounded-2xl shadow-xl">
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+              <div className="font-semibold text-lg">Indicators</div>
               <button
-                onClick={() => setIndicatorSettingsOpen(false)}
-                className="bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded text-xs"
+                onClick={() => setIndicatorsOpen(false)}
+                className="bg-white/10 hover:bg-white/15 px-4 py-2 rounded-lg text-sm"
               >
                 Close
               </button>
             </div>
 
-            <div className="p-4 space-y-4 text-sm">
-              {/* EMA */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                <div className="flex items-center justify-between">
+            <div className="p-6 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
                   <div>
-                    <div className="font-semibold">EMA</div>
-                    <div className="text-xs text-slate-400">Exponential Moving Average</div>
+                    <div className="font-medium">EMA</div>
+                    <div className="text-sm text-slate-400">Exponential Moving Average</div>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={indicators.ema.enabled}
-                    onChange={(e) =>
-                      setIndicators((p) => ({
-                        ...p,
-                        ema: { ...p.ema, enabled: e.target.checked },
-                      }))
-                    }
-                  />
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={indicators.ema.enabled}
+                      onChange={(e) =>
+                        setIndicators((p) => ({
+                          ...p,
+                          ema: { ...p.ema, enabled: e.target.checked },
+                        }))
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <label className="space-y-1">
-                    <div className="text-xs text-slate-400">Period</div>
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                  <div>
+                    <div className="font-medium">RSI</div>
+                    <div className="text-sm text-slate-400">Relative Strength Index</div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
-                      type="number"
-                      min={1}
-                      value={indicators.ema.period}
+                      type="checkbox"
+                      checked={indicators.rsi.enabled}
                       onChange={(e) =>
                         setIndicators((p) => ({
                           ...p,
-                          ema: { ...p.ema, period: Number(e.target.value) },
+                          rsi: { ...p.rsi, enabled: e.target.checked },
                         }))
                       }
-                      className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-sm"
+                      className="sr-only peer"
                     />
-                  </label>
-
-                  <label className="space-y-1">
-                    <div className="text-xs text-slate-400">Color</div>
-                    <input
-                      type="color"
-                      value={indicators.ema.color}
-                      onChange={(e) =>
-                        setIndicators((p) => ({
-                          ...p,
-                          ema: { ...p.ema, color: e.target.value },
-                        }))
-                      }
-                      className="w-full h-10 rounded bg-transparent border border-white/10"
-                    />
+                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                   </label>
                 </div>
               </div>
 
-              {/* RSI */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-semibold">RSI</div>
-                    <div className="text-xs text-slate-400">Relative Strength Index</div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={indicators.rsi.enabled}
-                    onChange={(e) =>
-                      setIndicators((p) => ({
-                        ...p,
-                        rsi: { ...p.rsi, enabled: e.target.checked },
-                      }))
-                    }
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <label className="space-y-1">
-                    <div className="text-xs text-slate-400">Length</div>
-                    <input
-                      type="number"
-                      min={1}
-                      value={indicators.rsi.length}
-                      onChange={(e) =>
-                        setIndicators((p) => ({
-                          ...p,
-                          rsi: { ...p.rsi, length: Number(e.target.value) },
-                        }))
-                      }
-                      className="w-full px-3 py-2 rounded bg-white/5 border border-white/10 text-sm"
-                    />
-                  </label>
-
-                  <label className="space-y-1">
-                    <div className="text-xs text-slate-400">Color</div>
-                    <input
-                      type="color"
-                      value={indicators.rsi.color}
-                      onChange={(e) =>
-                        setIndicators((p) => ({
-                          ...p,
-                          rsi: { ...p.rsi, color: e.target.value },
-                        }))
-                      }
-                      className="w-full h-10 rounded bg-transparent border border-white/10"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setIndicators(DEFAULT_INDICATORS);
                     toast.success("Indicators reset ✅");
                   }}
-                  className="bg-white/10 hover:bg-white/15 px-3 py-2 rounded text-xs"
+                  className="flex-1 bg-white/10 hover:bg-white/15 px-4 py-3 rounded-lg text-sm"
                 >
-                  Reset Default
+                  Reset
                 </button>
-
                 <button
                   onClick={() => {
-                    toast.success("Indicator settings applied ✅");
-                    setIndicatorSettingsOpen(false);
+                    setIndicatorsOpen(false);
+                    toast.success("Indicators updated ✅");
                   }}
-                  className="bg-sky-500/20 border border-sky-500/30 hover:bg-sky-500/30 px-3 py-2 rounded text-xs"
+                  className="flex-1 bg-sky-500 hover:bg-sky-600 px-4 py-3 rounded-lg text-sm font-semibold"
                 >
-                  Apply & Close
+                  Apply
                 </button>
               </div>
             </div>

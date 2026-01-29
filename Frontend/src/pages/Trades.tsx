@@ -1,319 +1,182 @@
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { createTrade, getTrades, deleteTrade } from "../services/tradeService";
-import { uploadImage } from "../services/uploadService";
-import { exportTradesCSV } from "../services/tradeService";
-
+import { useState } from "react";
+import { Filter, Plus, X, Calendar } from "lucide-react";
+import AddTradeModal from "../components/AddTradeModal";
 
 export default function Trades() {
-  const [trades, setTrades] = useState<any[]>([]);
-  const [loadingTrades, setLoadingTrades] = useState(false);
-  const [addingTrade, setAddingTrade] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  const [form, setForm] = useState({
-    symbol: "",
-    side: "BUY",
-    entry: "",
-    stopLoss: "",
-    takeProfit: "",
-    quantity: "1",
-    notes: "",
-    screenshotUrl: "",
-  });
-
-  const fetchTrades = async () => {
-    try {
-      setLoadingTrades(true);
-      const res = await getTrades();
-      setTrades(res.data);
-    } catch (err: any) {
-      toast.error("Failed to load trades ❌");
-    } finally {
-      setLoadingTrades(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTrades();
-  }, []);
-
-  const handleChange = (e: any) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // ✅ Upload screenshot to Cloudinary
-  const handleImageUpload = async (e: any) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploading(true);
-      const imageUrl = await uploadImage(file);
-
-setForm((prev) => ({
-  ...prev,
-  screenshotUrl: imageUrl,
-}));
-
-
-      toast.success("Screenshot uploaded ✅");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Upload failed ❌");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-
-    if (!form.symbol || !form.entry || !form.stopLoss) {
-      toast.error("Symbol, Entry, StopLoss required ❌");
-      return;
-    }
-
-    try {
-      setAddingTrade(true);
-
-      await createTrade({
-        ...form,
-        entry: Number(form.entry),
-        stopLoss: Number(form.stopLoss),
-        takeProfit: form.takeProfit ? Number(form.takeProfit) : 0,
-        quantity: Number(form.quantity),
-      });
-
-      toast.success("Trade Added ✅");
-
-      setForm({
-        symbol: "",
-        side: "BUY",
-        entry: "",
-        stopLoss: "",
-        takeProfit: "",
-        quantity: "1",
-        notes: "",
-        screenshotUrl: "",
-      });
-
-      fetchTrades();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Trade add failed ❌");
-    } finally {
-      setAddingTrade(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteTrade(id);
-      toast.success("Trade Deleted ✅");
-      fetchTrades();
-    } catch (err) {
-      toast.error("Delete failed ❌");
-    }
-  };
-
-  const handleExportCSV = async () => {
-    try {
-      const res = await exportTradesCSV();
-  
-      const blob = new Blob([res.data], { type: "text/csv" });
-      const url = window.URL.createObjectURL(blob);
-  
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "trades.csv";
-      a.click();
-  
-      window.URL.revokeObjectURL(url);
-  
-      toast.success("CSV Downloaded ✅");
-    } catch (err: any) {
-      toast.error("Export failed ❌");
-    }
-  };
-  
-  
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [addTradeOpen, setAddTradeOpen] = useState(false);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Trades Journal</h1>
+    <div className="space-y-6">
+      {/* =====================
+          PAGE HEADER
+      ===================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">Trades</h1>
+        </div>
 
-      <button
-  onClick={handleExportCSV}
-  className="bg-blue-600 text-white px-4 py-2 rounded mb-4"
->
-  Export CSV
-</button>
-
-
-      {/* Add Trade Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-4 rounded-xl shadow mb-6 grid gap-3"
-      >
-        <div className="grid grid-cols-2 gap-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="Symbol (e.g. EURUSD)"
-            name="symbol"
-            value={form.symbol}
-            onChange={handleChange}
-          />
-
-          <select
-            className="border p-2 rounded"
-            name="side"
-            value={form.side}
-            onChange={handleChange}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setAddTradeOpen(true)}
+            className="btn-primary flex items-center gap-2"
           >
-            <option value="BUY">BUY</option>
-            <option value="SELL">SELL</option>
-          </select>
+            <Plus size={16} />
+            Add Trade
+          </button>
+        </div>
+      </div>
+
+      {/* =====================
+          TRADE HISTORY CARD
+      ===================== */}
+      <div className="card p-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold">
+            Trade History{" "}
+            <span className="text-text-secondary font-normal text-sm">
+              0 of 0 trades
+            </span>
+          </h3>
+
+          <button
+            onClick={() => setFiltersOpen((v) => !v)}
+            className="btn-secondary flex items-center gap-2 text-sm"
+          >
+            <Filter size={16} />
+            Filters
+          </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="Entry"
-            name="entry"
-            value={form.entry}
-            onChange={handleChange}
-          />
-          <input
-            className="border p-2 rounded"
-            placeholder="Stop Loss"
-            name="stopLoss"
-            value={form.stopLoss}
-            onChange={handleChange}
-          />
-          <input
-            className="border p-2 rounded"
-            placeholder="Take Profit"
-            name="takeProfit"
-            value={form.takeProfit}
-            onChange={handleChange}
-          />
-        </div>
+        {/* =====================
+            FILTER PANEL
+        ===================== */}
+        {filtersOpen && (
+          <div className="mb-6 rounded-xl border border-border bg-background p-5 space-y-5">
+            {/* P&L */}
+            <FilterGroup label="P&L">
+              <FilterButton active>All</FilterButton>
+              <FilterButton>Profitable (0)</FilterButton>
+              <FilterButton>Loss (0)</FilterButton>
+            </FilterGroup>
 
-        <input
-          className="border p-2 rounded"
-          placeholder="Quantity"
-          name="quantity"
-          value={form.quantity}
-          onChange={handleChange}
-        />
+            {/* TYPE */}
+            <FilterGroup label="Type">
+              <FilterButton active>All</FilterButton>
+              <FilterButton>Long</FilterButton>
+              <FilterButton>Short</FilterButton>
+            </FilterGroup>
 
-        <textarea
-          className="border p-2 rounded"
-          placeholder="Notes"
-          name="notes"
-          value={form.notes}
-          onChange={handleChange}
-        />
+            {/* TIME PERIOD */}
+            <FilterGroup label="Time Period">
+              <FilterButton>All Time</FilterButton>
+              <FilterButton>Today</FilterButton>
+              <FilterButton>This Week</FilterButton>
+              <FilterButton active>This Month</FilterButton>
+              <FilterButton>Last Month</FilterButton>
+              <FilterButton>Last 3 Months</FilterButton>
+              <FilterButton icon={<Calendar size={14} />}>
+                Custom
+              </FilterButton>
+            </FilterGroup>
 
-        {/* ✅ Screenshot Upload */}
-        <div className="grid gap-2">
-          <label className="text-sm font-medium">Trade Screenshot</label>
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="border p-2 rounded"
-          />
-
-          {uploading && (
-            <p className="text-sm text-gray-500">Uploading screenshot...</p>
-          )}
-
-          {form.screenshotUrl && (
-            <div className="mt-2">
-              <p className="text-sm text-green-600">Uploaded ✅</p>
-              <img
-                src={form.screenshotUrl}
-                alt="Trade Screenshot"
-                className="mt-2 w-40 h-24 object-cover rounded border"
-              />
+            {/* Clear */}
+            <div className="flex justify-end">
+              <button className="text-sm text-text-secondary flex items-center gap-2 hover:text-text">
+                <X size={14} />
+                Clear All Filters
+              </button>
             </div>
-          )}
-        </div>
-
-        <button
-          disabled={addingTrade || uploading}
-          className="bg-black text-white py-2 rounded disabled:opacity-60"
-        >
-          {addingTrade ? "Adding..." : "Add Trade"}
-        </button>
-      </form>
-
-      {/* Trades List */}
-      <div className="bg-white p-4 rounded-xl shadow">
-        <h2 className="text-xl font-semibold mb-3">All Trades</h2>
-
-        {loadingTrades ? (
-          <p>Loading trades...</p>
-        ) : trades.length === 0 ? (
-          <p>No trades yet.</p>
-        ) : (
-          <div className="overflow-auto">
-            <table className="w-full border min-w-[900px]">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 border">Symbol</th>
-                  <th className="p-2 border">Side</th>
-                  <th className="p-2 border">Entry</th>
-                  <th className="p-2 border">SL</th>
-                  <th className="p-2 border">TP</th>
-                  <th className="p-2 border">R</th>
-                  <th className="p-2 border">Screenshot</th>
-                  <th className="p-2 border">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trades.map((t) => (
-                  <tr key={t._id}>
-                    <td className="p-2 border">{t.symbol}</td>
-                    <td className="p-2 border">{t.side}</td>
-                    <td className="p-2 border">{t.entry}</td>
-                    <td className="p-2 border">{t.stopLoss}</td>
-                    <td className="p-2 border">{t.takeProfit}</td>
-                    <td className="p-2 border">
-                      {t.rMultiple ? Number(t.rMultiple).toFixed(2) : "-"}
-                    </td>
-
-                    <td className="p-2 border">
-                      {t.screenshotUrl ? (
-                        <a
-                          href={t.screenshotUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 underline"
-                        >
-                          View
-                        </a>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    <td className="p-2 border">
-                      <button
-                        onClick={() => handleDelete(t._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         )}
+
+        {/* =====================
+            TABLE
+        ===================== */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-text-secondary">
+                <th className="py-2 text-left font-medium">DATE</th>
+                <th className="py-2 text-left font-medium">SYMBOL</th>
+                <th className="py-2 text-left font-medium">TYPE</th>
+                <th className="py-2 text-left font-medium">ENTRY</th>
+                <th className="py-2 text-left font-medium">EXIT</th>
+                <th className="py-2 text-left font-medium">SIZE</th>
+                <th className="py-2 text-left font-medium">P&amp;L</th>
+                <th className="py-2 text-left font-medium">SOURCE</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td colSpan={8} className="py-20 text-center">
+                  <div className="flex flex-col items-center gap-3 text-text-secondary">
+                    <Filter size={28} />
+                    <p>No trades match your filters</p>
+                    <button className="btn-secondary text-sm">
+                      Clear Filters
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* =====================
+          ADD TRADE MODAL
+      ===================== */}
+      {addTradeOpen && (
+        <AddTradeModal onClose={() => setAddTradeOpen(false)} />
+      )}
     </div>
+  );
+}
+
+/* =====================
+   SMALL UI COMPONENTS
+===================== */
+
+function FilterGroup({
+  label,
+  children
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs font-medium uppercase text-text-secondary">
+        {label}
+      </p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function FilterButton({
+  children,
+  active,
+  icon
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      className={`px-3 py-1.5 rounded-lg text-sm flex items-center gap-2
+        ${
+          active
+            ? "bg-primary/20 text-primary"
+            : "border border-border hover:bg-border-light"
+        }`}
+    >
+      {icon}
+      {children}
+    </button>
   );
 }

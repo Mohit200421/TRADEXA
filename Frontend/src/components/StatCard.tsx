@@ -1,24 +1,18 @@
-import { ReactNode } from "react";
-import { motion } from "framer-motion";
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  icon: ReactNode;
-  index: number;
-}
-
-export const StatCard = ({ label, value, icon, index }: StatCardProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay: index * 0.1 }}
-    className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 hover:border-gray-600 transition-colors"
-  >
-    <div className="flex items-center justify-between mb-2">
-      <div className="text-3xl font-bold">{value}</div>
-      <div className="text-blue-400">{icon}</div>
+export default function StatCard({ title, value, subtitle, icon: Icon }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-slate-500">{title}</p>
+          <p className="text-2xl font-bold">{value}</p>
+          {subtitle && (
+            <p className="text-xs text-slate-400 mt-1">{subtitle}</p>
+          )}
+        </div>
+        <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+          <Icon />
+        </div>
+      </div>
     </div>
-    <div className="text-gray-400 text-sm">{label}</div>
-  </motion.div>
-);
+  );
+}
