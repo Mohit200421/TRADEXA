@@ -17,7 +17,6 @@ import Market from "./pages/Market";
 import Community from "./pages/Community";
 import Tools from "./pages/Tools";
 
-
 import DashboardLayout from "./layouts/DashboardLayout";
 
 export default function App() {
@@ -32,24 +31,22 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Dashboard layout routes */}
+          {/* Dashboard routes */}
           <Route element={<DashboardLayout />}>
-  <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/trades" element={<Trades />} />
+            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/replay" element={<Replay />} />
+            <Route path="/replay-backtest" element={<ReplayBacktest />} />
+            <Route path="/trading-chart" element={<TradingViewPro />} />
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/performance" element={<Performance />} />
+            <Route path="/market" element={<Market />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/tools" element={<Tools />} />
+          </Route>
 
-  <Route path="/dashboard" element={<Dashboard />} />
-  <Route path="/trades" element={<Trades />} />
-  <Route path="/reviews" element={<Reviews />} />
-  <Route path="/replay" element={<Replay />} />
-  <Route path="/replay-backtest" element={<ReplayBacktest />} />
-  <Route path="/trading-chart" element={<TradingViewPro />} />
-  <Route path="/journal" element={<Journal />} />
-  <Route path="/performance" element={<Performance />} />
-  <Route path="/market" element={<Market />} />
-  <Route path="/community" element={<Community />} />
-  <Route path="/tools" element={<Tools />} />
-</Route>
-
-
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
