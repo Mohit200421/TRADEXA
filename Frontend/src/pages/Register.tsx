@@ -33,40 +33,43 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+  
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       toast.error("Please fill in all fields");
       return;
     }
-    
+  
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
-    
+  
     if (form.password.length < 8) {
       toast.error("Password must be at least 8 characters");
       return;
     }
-    
+  
     setIsLoading(true);
-    
+  
     try {
       const { confirmPassword, ...registerData } = form;
-      const res = await API.post("/api/auth/register", registerData);
-      localStorage.setItem("token", res.data.token);
-      if (res.data.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
-      toast.success("Account Created Successfully! 🎉");
-      navigate("/dashboard");
+  
+      await API.post("/api/auth/register", registerData);
+  
+      toast.success(
+        "Account created! 📧 Please check your email to verify your account."
+      );
+  
+      navigate("/login"); // ✅ go to login, NOT dashboard
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Registration failed. Please try again.";
+      const errorMessage =
+        err.response?.data?.message || "Registration failed";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const getPasswordStrengthColor = (strength: number) => {
     if (strength === 0) return "bg-gray-200 dark:bg-gray-700";

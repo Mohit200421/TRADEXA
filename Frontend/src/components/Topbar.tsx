@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   Bell,
@@ -9,14 +10,19 @@ import {
   LogOut,
   Sun,
   Moon,
-  LucideIcon
+  LucideIcon,
 } from "lucide-react";
+
+import { useAuth } from "../contexts/AuthContext";
 
 interface TopbarProps {
   collapsed: boolean;
 }
 
 export default function Topbar({ collapsed }: TopbarProps) {
+  const { logout, user } = useAuth(); // 🔐 auth hook
+  const navigate = useNavigate();     // ✅ ADD (logic only)
+
   const [time, setTime] = useState<Date>(new Date());
   const [open, setOpen] = useState<boolean>(false);
   const [dark, setDark] = useState<boolean>(
@@ -63,6 +69,14 @@ export default function Topbar({ collapsed }: TopbarProps) {
     );
   };
 
+  /* =========================
+     LOGOUT HANDLER (FIX)
+  ========================= */
+  const handleLogout = async () => {
+    await logout();        // clear cookie + context
+    navigate("/login");   // redirect
+  };
+
   return (
     <header
       className={`fixed top-0 right-0 h-16 bg-surface border-b border-border
@@ -71,29 +85,24 @@ export default function Topbar({ collapsed }: TopbarProps) {
         ${collapsed ? "left-20" : "left-64"}
       `}
     >
-      {/* =========================
-         LEFT: PAGE TITLE + DATE
-      ========================= */}
+      {/* LEFT */}
       <div>
         <h1 className="text-lg font-semibold">Dashboard</h1>
         <p className="text-xs text-text-secondary">
           {time.toLocaleDateString(undefined, {
             weekday: "short",
             month: "short",
-            day: "numeric"
+            day: "numeric",
           })}
         </p>
       </div>
 
-      {/* =========================
-         RIGHT SIDE ACTIONS
-      ========================= */}
+      {/* RIGHT */}
       <div className="flex items-center gap-4">
-        {/* Theme toggle */}
+        {/* Theme */}
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg hover:bg-border-light"
-          aria-label="Toggle theme"
         >
           {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
@@ -103,12 +112,12 @@ export default function Topbar({ collapsed }: TopbarProps) {
           {time.toLocaleTimeString()}
         </div>
 
-        {/* Notifications */}
+        {/* Notification */}
         <button className="p-2 rounded-lg hover:bg-border-light">
           <Bell size={18} />
         </button>
 
-        {/* Profile dropdown */}
+        {/* Profile */}
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setOpen((prev) => !prev)}
@@ -124,22 +133,25 @@ export default function Topbar({ collapsed }: TopbarProps) {
 
           {open && (
             <div className="absolute right-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
-              {/* User info */}
+              {/* USER */}
               <div className="p-4 border-b border-border">
-                <p className="font-medium">Mohit Badgujar</p>
-                <p className="text-xs text-text-secondary">
-                  mohitbadgujar04@gmail.com
-                </p>
+                <p className="font-medium">{user?.name}</p>
+                <p className="text-xs text-text-secondary">{user?.email}</p>
               </div>
 
-              {/* Menu */}
+              {/* MENU */}
               <div className="p-2 space-y-1 text-sm">
                 <MenuItem icon={User} label="My Profile" />
                 <MenuItem icon={Settings} label="Settings" />
                 <MenuItem icon={CreditCard} label="Subscription" />
                 <MenuItem icon={HelpCircle} label="Help & Support" />
                 <hr className="my-1 border-border" />
-                <MenuItem icon={LogOut} label="Sign Out" danger />
+                <MenuItem
+                  icon={LogOut}
+                  label="Sign Out"
+                  danger
+                  onClick={handleLogout} // ✅ FIXED
+                />
               </div>
             </div>
           )}
@@ -150,19 +162,22 @@ export default function Topbar({ collapsed }: TopbarProps) {
 }
 
 /* =========================
-   DROPDOWN ITEM
+   MENU ITEM
 ========================= */
 function MenuItem({
   icon: Icon,
   label,
-  danger
+  danger,
+  onClick,
 }: {
   icon: LucideIcon;
   label: string;
   danger?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <button
+      onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition
         ${
           danger

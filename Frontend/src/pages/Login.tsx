@@ -14,9 +14,11 @@ import API from "../api/axios";
 import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext"; // ✅ ADD THIS
 
 export default function Login() {
   const { theme } = useTheme();
+  const { setUser } = useAuth(); // ✅ ADD THIS
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,21 +39,22 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // ✅ FIX: removed extra /api
-      const res = await API.post("/auth/login", form);
+      // 1️⃣ Login (cookie set)
+      await API.post("/api/auth/login", form);
 
-      localStorage.setItem("token", res.data.token);
-      if (res.data.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
+      // 2️⃣ Fetch current user
+      const meRes = await API.get("/api/auth/me");
+
+      // 3️⃣ UPDATE AUTH CONTEXT (MAIN FIX)
+      setUser(meRes.data);
 
       toast.success("Login Successful! 🎉");
       navigate("/dashboard");
     } catch (err: any) {
-      const errorMessage =
+      toast.error(
         err.response?.data?.message ||
-        "Login failed. Please check your credentials.";
-      toast.error(errorMessage);
+          "Login failed. Please check your credentials."
+      );
     } finally {
       setIsLoading(false);
     }
