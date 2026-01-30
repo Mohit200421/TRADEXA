@@ -1,10 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Filter, Plus, X, Calendar } from "lucide-react";
 import AddTradeModal from "../components/AddTradeModal";
+import API from "../api/axios";
+import toast from "react-hot-toast";
+
+interface Trade {
+  _id: string;
+  symbol: string;
+  type: "LONG" | "SHORT";
+  entryPrice: number;
+  exitPrice: number | null;
+  lotSize: number;
+  pnl: number;
+  entryDate: string;
+}
 
 export default function Trades() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addTradeOpen, setAddTradeOpen] = useState(false);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  /* =====================
+     FETCH TRADES
+  ===================== */
+  const fetchTrades = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get("/trades"); // ✅ IMPORTANT (no /api)
+      setTrades(res.data);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load trades");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrades();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -36,7 +70,7 @@ export default function Trades() {
           <h3 className="font-semibold">
             Trade History{" "}
             <span className="text-text-secondary font-normal text-sm">
-              0 of 0 trades
+              {trades.length} trades
             </span>
           </h3>
 
@@ -50,38 +84,30 @@ export default function Trades() {
         </div>
 
         {/* =====================
-            FILTER PANEL
+            FILTER PANEL (UI ONLY)
         ===================== */}
         {filtersOpen && (
           <div className="mb-6 rounded-xl border border-border bg-background p-5 space-y-5">
-            {/* P&L */}
             <FilterGroup label="P&L">
               <FilterButton active>All</FilterButton>
-              <FilterButton>Profitable (0)</FilterButton>
-              <FilterButton>Loss (0)</FilterButton>
+              <FilterButton>Profitable</FilterButton>
+              <FilterButton>Loss</FilterButton>
             </FilterGroup>
 
-            {/* TYPE */}
             <FilterGroup label="Type">
               <FilterButton active>All</FilterButton>
               <FilterButton>Long</FilterButton>
               <FilterButton>Short</FilterButton>
             </FilterGroup>
 
-            {/* TIME PERIOD */}
             <FilterGroup label="Time Period">
               <FilterButton>All Time</FilterButton>
-              <FilterButton>Today</FilterButton>
-              <FilterButton>This Week</FilterButton>
-              <FilterButton active>This Month</FilterButton>
-              <FilterButton>Last Month</FilterButton>
-              <FilterButton>Last 3 Months</FilterButton>
+              <FilterButton>This Month</FilterButton>
               <FilterButton icon={<Calendar size={14} />}>
                 Custom
               </FilterButton>
             </FilterGroup>
 
-            {/* Clear */}
             <div className="flex justify-end">
               <button className="text-sm text-text-secondary flex items-center gap-2 hover:text-text">
                 <X size={14} />
@@ -105,22 +131,50 @@ export default function Trades() {
                 <th className="py-2 text-left font-medium">EXIT</th>
                 <th className="py-2 text-left font-medium">SIZE</th>
                 <th className="py-2 text-left font-medium">P&amp;L</th>
-                <th className="py-2 text-left font-medium">SOURCE</th>
               </tr>
             </thead>
 
             <tbody>
-              <tr>
-                <td colSpan={8} className="py-20 text-center">
-                  <div className="flex flex-col items-center gap-3 text-text-secondary">
-                    <Filter size={28} />
-                    <p>No trades match your filters</p>
-                    <button className="btn-secondary text-sm">
-                      Clear Filters
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-10 text-center">
+                    Loading trades...
+                  </td>
+                </tr>
+              ) : trades.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3 text-text-secondary">
+                      <Filter size={28} />
+                      <p>No trades added yet</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                trades.map((trade) => (
+                  <tr key={trade._id} className="border-b border-border">
+                    <td className="py-2">
+                      {new Date(trade.entryDate).toLocaleDateString()}
+                    </td>
+                    <td className="py-2 font-medium">{trade.symbol}</td>
+                    <td className="py-2">{trade.type}</td>
+                    <td className="py-2">{trade.entryPrice}</td>
+                    <td className="py-2">
+                      {trade.exitPrice ?? "-"}
+                    </td>
+                    <td className="py-2">{trade.lotSize}</td>
+                    <td
+                      className={`py-2 font-medium ${
+                        trade.pnl >= 0
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {trade.pnl}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -130,7 +184,10 @@ export default function Trades() {
           ADD TRADE MODAL
       ===================== */}
       {addTradeOpen && (
-        <AddTradeModal onClose={() => setAddTradeOpen(false)} />
+        <AddTradeModal
+          onClose={() => setAddTradeOpen(false)}
+          onSuccess={fetchTrades} // 🔥 MAIN LINK
+        />
       )}
     </div>
   );
@@ -142,7 +199,7 @@ export default function Trades() {
 
 function FilterGroup({
   label,
-  children
+  children,
 }: {
   label: string;
   children: React.ReactNode;
@@ -160,7 +217,7 @@ function FilterGroup({
 function FilterButton({
   children,
   active,
-  icon
+  icon,
 }: {
   children: React.ReactNode;
   active?: boolean;

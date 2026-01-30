@@ -8,41 +8,65 @@ const tradeRoutes = require("./routes/tradeRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const connectDB = require("./config/db");
 
 const app = express();
 
-/* ---------- Middleware ---------- */
+/* =========================
+   CORS (LOCAL + DEPLOY SAFE)
+========================= */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://trade-fx-flax.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",              // local frontend
-      "https://trade-fx-flax.vercel.app"    // deployed frontend
-    ],
+    origin: function (origin, callback) {
+      // allow Postman / server-to-server
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 
+/* =========================
+   MIDDLEWARES
+========================= */
 app.use(express.json());
 app.use(cookieParser());
 
-/* ---------- Routes ---------- */
+/* =========================
+   ROUTES
+========================= */
 app.use("/api/auth", authRoutes);
 app.use("/api/trades", tradeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/user", userRoutes);
 
-/* ---------- Health ---------- */
+/* =========================
+   HEALTH CHECK
+========================= */
 app.get("/", (req, res) => {
   res.send("Trading Journal Backend Running ✅");
 });
 
-/* ---------- DB ---------- */
+/* =========================
+   DATABASE + SERVER
+========================= */
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

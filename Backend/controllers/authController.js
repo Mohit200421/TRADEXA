@@ -5,9 +5,9 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 
 /* =========================
-   REGISTER + SEND VERIFY MAIL
+   REGISTER
 ========================= */
-exports.register = async (req, res) => {
+const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const verifyToken = crypto.randomBytes(32).toString("hex");
 
-    const user = await User.create({
+    await User.create({
       name,
       email,
       password: hashedPassword,
@@ -32,20 +32,15 @@ exports.register = async (req, res) => {
       emailVerifyExpiry: Date.now() + 24 * 60 * 60 * 1000,
     });
 
-    // 🔥 DIRECT BACKEND VERIFY LINK
-    const verifyLink = `http://localhost:5000/api/auth/verify-email?token=${verifyToken}`;
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
 
     await sendEmail({
       to: email,
       subject: "Verify your TradeFX account",
-      html: `
-        <h2>Welcome to TradeFX</h2>
-        <p>Please verify your email:</p>
-        <a href="${verifyLink}">Verify Email</a>
-      `,
+      html: `<a href="${verifyLink}">Verify Email</a>`,
     });
 
-    res.status(201).json({
+    res.json({
       message: "Registered successfully. Please verify your email.",
     });
   } catch (err) {
@@ -57,7 +52,7 @@ exports.register = async (req, res) => {
 /* =========================
    VERIFY EMAIL
 ========================= */
-exports.verifyEmail = async (req, res) => {
+const verifyEmail = async (req, res) => {
   try {
     const { token } = req.query;
 
@@ -75,17 +70,16 @@ exports.verifyEmail = async (req, res) => {
     user.emailVerifyExpiry = undefined;
     await user.save();
 
-    // ✅ SIMPLE RESPONSE
-    res.send("Email verified successfully. You can close this tab and login.");
+    res.send("Email verified successfully. You can login.");
   } catch (err) {
     res.status(500).send("Verification failed");
   }
 };
 
 /* =========================
-   LOGIN
+   LOGIN  (🔥 COOKIE REMOVED)
 ========================= */
-exports.login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -111,15 +105,9 @@ exports.login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false, // ✅ LOCAL SAFE
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
+    // 🔥 NO COOKIE — PURE TOKEN
     res.json({
-      message: "Login successful",
+      token,
       user: {
         id: user._id,
         name: user.name,
@@ -127,27 +115,31 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Login failed" });
   }
 };
 
 /* =========================
-   LOGOUT (FIXED BUG)
+   LOGOUT
 ========================= */
-exports.logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-  });
-
+const logout = async (req, res) => {
+  // token frontend वर delete होतो
   res.json({ message: "Logged out successfully" });
 };
 
 /* =========================
    GET CURRENT USER
 ========================= */
-exports.getMe = async (req, res) => {
+const getMe = async (req, res) => {
   const user = await User.findById(req.userId).select("-password");
   res.json(user);
+};
+
+module.exports = {
+  register,
+  verifyEmail,
+  login,
+  logout,
+  getMe,
 };

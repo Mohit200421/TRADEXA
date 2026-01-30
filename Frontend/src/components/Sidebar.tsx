@@ -8,8 +8,10 @@ import {
   Users,
   Wrench,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
+
+import { useAuth } from "../contexts/AuthContext"; // ✅ ADD
 
 interface SidebarProps {
   collapsed: boolean;
@@ -23,10 +25,12 @@ const menuItems = [
   { label: "Performance", path: "/performance", icon: BarChart3 },
   { label: "Market", path: "/market", icon: TrendingUp },
   { label: "Community", path: "/community", icon: Users },
-  { label: "Tools", path: "/tools", icon: Wrench }
+  { label: "Tools", path: "/tools", icon: Wrench },
 ];
 
 export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+  const { user } = useAuth(); // ✅ REAL USER
+
   return (
     <aside
       className={`fixed left-0 top-0 h-screen bg-surface border-r border-border
@@ -45,26 +49,28 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
           {collapsed ? <ChevronRight /> : <ChevronLeft />}
         </button>
       </div>
-{/* ======================
-          USER PROFILE
+
+      {/* ======================
+            USER PROFILE
       ====================== */}
-      {!collapsed && (
+      {!collapsed && user && (
         <div className="mx-3 mb-4 p-3 rounded-xl bg-border-light">
           <div className="flex items-center gap-3">
             <img
-              src="/avatar.jpg"
+              src={user.avatar || "/avatar.jpg"}   // ✅ dynamic avatar
               alt="User"
               className="w-10 h-10 rounded-full object-cover"
             />
             <div className="min-w-0">
-              <p className="font-medium truncate">Mohit Badgujar</p>
+              <p className="font-medium truncate">{user.name}</p>
               <p className="text-xs text-text-secondary truncate">
-                mohitbadgujar04@gmail.com
+                {user.email}
               </p>
             </div>
           </div>
         </div>
       )}
+
       {/* Menu */}
       <nav className="px-3 space-y-1">
         {menuItems.map(({ label, path, icon: Icon }) => (

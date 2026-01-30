@@ -20,8 +20,8 @@ interface TopbarProps {
 }
 
 export default function Topbar({ collapsed }: TopbarProps) {
-  const { logout, user } = useAuth(); // 🔐 auth hook
-  const navigate = useNavigate();     // ✅ ADD (logic only)
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
 
   const [time, setTime] = useState<Date>(new Date());
   const [open, setOpen] = useState<boolean>(false);
@@ -70,11 +70,11 @@ export default function Topbar({ collapsed }: TopbarProps) {
   };
 
   /* =========================
-     LOGOUT HANDLER (FIX)
+     LOGOUT
   ========================= */
   const handleLogout = async () => {
-    await logout();        // clear cookie + context
-    navigate("/login");   // redirect
+    await logout();
+    navigate("/login");
   };
 
   return (
@@ -124,7 +124,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
             className="flex items-center gap-2 p-1.5 rounded-full hover:bg-border-light"
           >
             <img
-              src="/avatar.jpg"
+              src={user?.avatar || "/avatar.jpg"}   // ✅ FIX 1: dynamic avatar
               alt="User avatar"
               className="w-8 h-8 rounded-full object-cover"
             />
@@ -141,7 +141,11 @@ export default function Topbar({ collapsed }: TopbarProps) {
 
               {/* MENU */}
               <div className="p-2 space-y-1 text-sm">
-                <MenuItem icon={User} label="My Profile" />
+                <MenuItem
+                  icon={User}
+                  label="My Profile"
+                  onClick={() => navigate("/profile")} // ✅ FIX 2
+                />
                 <MenuItem icon={Settings} label="Settings" />
                 <MenuItem icon={CreditCard} label="Subscription" />
                 <MenuItem icon={HelpCircle} label="Help & Support" />
@@ -150,7 +154,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
                   icon={LogOut}
                   label="Sign Out"
                   danger
-                  onClick={handleLogout} // ✅ FIXED
+                  onClick={handleLogout}
                 />
               </div>
             </div>

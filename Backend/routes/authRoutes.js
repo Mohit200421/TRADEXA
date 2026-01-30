@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/auth");
 
+const auth = require("../middleware/auth");
 const {
   register,
   verifyEmail,
@@ -10,7 +10,11 @@ const {
   getMe,
 } = require("../controllers/authController");
 
-// Register + verify
+/* =========================
+   AUTH ROUTES
+========================= */
+
+// Register + Email verify
 router.post("/register", register);
 router.get("/verify-email", verifyEmail);
 
@@ -18,7 +22,12 @@ router.get("/verify-email", verifyEmail);
 router.post("/login", login);
 router.post("/logout", auth, logout);
 
-// Current user
+// Authenticated user
 router.get("/me", auth, getMe);
+
+// Health test
+router.get("/test", (req, res) => {
+  res.send("Auth routes OK");
+});
 
 module.exports = router;

@@ -2,23 +2,26 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import HomePage from "./pages/HomePage";
+
 import Dashboard from "./pages/Dashboard";
 import Trades from "./pages/Trades";
 import Reviews from "./pages/Reviews";
 import ReplayBacktest from "./pages/ReplayBacktest";
 import Replay from "./pages/Replay";
-import HomePage from "./pages/HomePage";
 import TradingViewPro from "./pages/TradingViewPro";
 import Journal from "./pages/Journal";
 import Performance from "./pages/Performance";
 import Market from "./pages/Market";
 import Community from "./pages/Community";
 import Tools from "./pages/Tools";
+import Profile from "./pages/Profile";
 
 import DashboardLayout from "./layouts/DashboardLayout";
 
@@ -29,24 +32,22 @@ export default function App() {
         <Toaster position="top-right" />
 
         <Routes>
-          {/* Public routes */}
+          {/* ================= PUBLIC ROUTES ================= */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-<Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-
-
-          {/* Dashboard routes */}
+          {/* ================= PROTECTED DASHBOARD ROUTES ================= */}
           <Route
-  element={
-    <ProtectedRoute>
-      <DashboardLayout />
-    </ProtectedRoute>
-  }
->
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/trades" element={<Trades />} />
             <Route path="/reviews" element={<Reviews />} />
@@ -58,9 +59,12 @@ export default function App() {
             <Route path="/market" element={<Market />} />
             <Route path="/community" element={<Community />} />
             <Route path="/tools" element={<Tools />} />
+
+            {/* 🔥 PROFILE ROUTE */}
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
-          {/* Fallback */}
+          {/* ================= FALLBACK ================= */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>

@@ -1,0 +1,65 @@
+/* ===============================
+   REACT DATEPICKER FIXES
+================================ */
+
+/* Ensure datepicker stays above modal */
+.react-datepicker-popper {
+  z-index: 10000 !important;
+}
+
+/* Fix calendar layout */
+.react-datepicker {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+/* Fix time container width */
+.react-datepicker__time-container {
+  width: 90px;
+  border-left: 1px solid var(--border, #e5e7eb);
+}
+
+/* Fix time list scrolling */
+.react-datepicker__time {
+  max-height: 220px;
+}
+
+.react-datepicker__time-list {
+  height: 220px !important;
+  overflow-y: auto;
+}
+
+/* Fix time item size */
+.react-datepicker__time-list-item {
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+
+/* Prevent calendar overflow */
+.react-datepicker__month-container {
+  padding: 4px;
+}
+
+/* Dark mode support */
+.dark .react-datepicker {
+  background-color: #0b0b0b;
+  border: 1px solid #262626;
+}
+
+.dark .react-datepicker__header {
+  background-color: #141414;
+  border-bottom: 1px solid #262626;
+}
+
+.dark .react-datepicker__day,
+.dark .react-datepicker__time-list-item {
+  color: #e5e5e5;
+}
+
+.dark .react-datepicker__day--selected,
+.dark .react-datepicker__time-list-item--selected {
+  background-color: #2563eb;
+  color: white;
+}

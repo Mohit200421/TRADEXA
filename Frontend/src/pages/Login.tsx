@@ -39,16 +39,27 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // 1️⃣ Login (cookie set)
-      await API.post("/api/auth/login", form);
+      /* =========================
+         1️⃣ LOGIN
+      ========================= */
+      const loginRes = await API.post("/auth/login", form);
 
-      // 2️⃣ Fetch current user
-      const meRes = await API.get("/api/auth/me");
+      // 🔥 SAVE TOKEN (THIS FIXES TRADE 401)
+      if (loginRes.data?.token) {
+        localStorage.setItem("token", loginRes.data.token);
+      }
 
-      // 3️⃣ UPDATE AUTH CONTEXT (MAIN FIX)
+      /* =========================
+         2️⃣ FETCH CURRENT USER
+      ========================= */
+      const meRes = await API.get("/auth/me");
+
+      /* =========================
+         3️⃣ UPDATE AUTH CONTEXT
+      ========================= */
       setUser(meRes.data);
 
-      toast.success("Login Successful! 🎉");
+      toast.success("Login Successful!");
       navigate("/dashboard");
     } catch (err: any) {
       toast.error(

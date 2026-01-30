@@ -7,7 +7,11 @@ const { calculatePnL } = require("../utils/pnlCalculator");
  */
 exports.createTrade = async (req, res) => {
   try {
-    const userId = req.user.id;
+    // ✅ CORRECT USER ID
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
 
     let {
       symbol,
@@ -20,41 +24,50 @@ exports.createTrade = async (req, res) => {
       notes,
     } = req.body;
 
-    // ✅ Required fields validation
-    if (!symbol || !type || entryPrice == null || !lotSize || !entryDate) {
+    // ✅ Required validation
+    if (!symbol || !type || entryPrice === "" || lotSize === "" || !entryDate) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Normalize & cast
-    symbol = symbol.toUpperCase();
-    type = type.toUpperCase(); // LONG / SHORT
+    // ✅ Safe number casting
     entryPrice = Number(entryPrice);
     lotSize = Number(lotSize);
-    exitPrice = exitPrice != null ? Number(exitPrice) : null;
+    exitPrice =
+      exitPrice !== undefined && exitPrice !== ""
+        ? Number(exitPrice)
+        : null;
+
+    if (Number.isNaN(entryPrice) || Number.isNaN(lotSize)) {
+      return res.status(400).json({ message: "Invalid numeric values" });
+    }
 
     let pips = 0;
     let pnl = 0;
     let status = "OPEN";
 
-    // ✅ Calculate P&L only if trade is closed
+    // ✅ CLOSED trade calculation only
     if (exitPrice !== null) {
+      if (Number.isNaN(exitPrice)) {
+        return res.status(400).json({ message: "Invalid exit price" });
+      }
+
       const result = calculatePnL({
-        symbol,
-        type,
+        symbol: symbol.toUpperCase(),
+        type: type.toUpperCase(),
         entryPrice,
         exitPrice,
         lotSize,
       });
 
-      pips = result.pips;
-      pnl = result.pnl;
+      pips = Number(result.pips) || 0;
+      pnl = Number(result.pnl) || 0;
       status = "CLOSED";
     }
 
     const trade = await Trade.create({
       userId,
-      symbol,
-      type,
+      symbol: symbol.toUpperCase(),
+      type: type.toUpperCase(),
       entryPrice,
       exitPrice,
       lotSize,
@@ -63,15 +76,16 @@ exports.createTrade = async (req, res) => {
       pips,
       pnl,
       status,
-      notes,
+      notes: notes || "",
     });
 
     res.status(201).json(trade);
   } catch (error) {
-    console.error("Create trade error:", error.message);
-    res.status(500).json({ message: error.message });
+    console.error("Create trade error:", error);
+    res.status(500).json({ message: "Failed to create trade" });
   }
 };
+
 
 /**
  * Get all trades
@@ -79,8 +93,8 @@ exports.createTrade = async (req, res) => {
  */
 exports.getTrades = async (req, res) => {
   try {
-    const trades = await Trade.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
+    const trades = await Trade.find({ userId: req.user?.id })
+      .sort({ entryDate: -1 }); // ✅ FIX 2: better sort
 
     res.json(trades);
   } catch (error) {
@@ -96,7 +110,7 @@ exports.deleteTrade = async (req, res) => {
   try {
     const trade = await Trade.findOneAndDelete({
       _id: req.params.id,
-      userId: req.user.id,
+      userId: req.user?.id, // ✅ FIX
     });
 
     if (!trade) {
@@ -123,7 +137,7 @@ exports.closeTrade = async (req, res) => {
 
     const trade = await Trade.findOne({
       _id: req.params.id,
-      userId: req.user.id,
+      userId: req.user?.id, // ✅ FIX
       status: "OPEN",
     });
 
