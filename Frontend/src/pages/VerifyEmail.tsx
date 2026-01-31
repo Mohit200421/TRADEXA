@@ -8,19 +8,22 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     const token = params.get("token");
+
     if (!token) {
       setStatus("Invalid verification link");
       return;
     }
 
-    API.get(`/api/auth/verify-email?token=${token}`)
-      .then(() => setStatus("Email verified successfully 🎉"))
-      .catch(() => setStatus("Invalid or expired verification link"));
-  }, []);
+    API.get(`/auth/verify-email?token=${token}`)
+      .then(() => setStatus("Email verified successfully 🎉 You can now login."))
+      .catch(() =>
+        setStatus("Invalid or expired verification link")
+      );
+  }, [params]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-lg">{status}</p>
+      <p className="text-lg font-medium">{status}</p>
     </div>
   );
 }

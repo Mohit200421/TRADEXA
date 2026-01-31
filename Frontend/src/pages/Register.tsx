@@ -54,7 +54,8 @@ export default function Register() {
     try {
       const { confirmPassword, ...registerData } = form;
   
-      await API.post("/api/auth/register", registerData);
+      await API.post("/auth/register", registerData);
+
   
       toast.success(
         "Account created! 📧 Please check your email to verify your account."
