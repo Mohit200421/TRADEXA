@@ -2,16 +2,11 @@ const Trade = require("../models/Trade");
 const { calculatePnL } = require("../utils/pnlCalculator");
 
 /**
- * Create / Journal a Trade
- * POST /api/trades
+ * CREATE TRADE
  */
 exports.createTrade = async (req, res) => {
   try {
-    // ✅ CORRECT USER ID
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
+    const userId = req.user.id; // ✅ SINGLE SOURCE
 
     let {
       symbol,
@@ -24,33 +19,19 @@ exports.createTrade = async (req, res) => {
       notes,
     } = req.body;
 
-    // ✅ Required validation
     if (!symbol || !type || entryPrice === "" || lotSize === "" || !entryDate) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Safe number casting
     entryPrice = Number(entryPrice);
     lotSize = Number(lotSize);
-    exitPrice =
-      exitPrice !== undefined && exitPrice !== ""
-        ? Number(exitPrice)
-        : null;
-
-    if (Number.isNaN(entryPrice) || Number.isNaN(lotSize)) {
-      return res.status(400).json({ message: "Invalid numeric values" });
-    }
+    exitPrice = exitPrice !== "" && exitPrice != null ? Number(exitPrice) : null;
 
     let pips = 0;
     let pnl = 0;
     let status = "OPEN";
 
-    // ✅ CLOSED trade calculation only
     if (exitPrice !== null) {
-      if (Number.isNaN(exitPrice)) {
-        return res.status(400).json({ message: "Invalid exit price" });
-      }
-
       const result = calculatePnL({
         symbol: symbol.toUpperCase(),
         type: type.toUpperCase(),
@@ -59,8 +40,8 @@ exports.createTrade = async (req, res) => {
         lotSize,
       });
 
-      pips = Number(result.pips) || 0;
-      pnl = Number(result.pnl) || 0;
+      pips = result.pips;
+      pnl = result.pnl;
       status = "CLOSED";
     }
 
@@ -80,90 +61,101 @@ exports.createTrade = async (req, res) => {
     });
 
     res.status(201).json(trade);
-  } catch (error) {
-    console.error("Create trade error:", error);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Failed to create trade" });
   }
 };
 
-
 /**
- * Get all trades
- * GET /api/trades
+ * GET TRADES
  */
 exports.getTrades = async (req, res) => {
-  try {
-    const trades = await Trade.find({ userId: req.user?.id })
-      .sort({ entryDate: -1 }); // ✅ FIX 2: better sort
-
-    res.json(trades);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch trades" });
-  }
+  const trades = await Trade.find({ userId: req.user.id })
+    .sort({ entryDate: -1 });
+  res.json(trades);
 };
 
 /**
- * Delete a trade
- * DELETE /api/trades/:id
+ * DELETE TRADE
  */
 exports.deleteTrade = async (req, res) => {
+  const trade = await Trade.findOneAndDelete({
+    _id: req.params.id,
+    userId: req.user.id,
+  });
+
+  if (!trade) {
+    return res.status(404).json({ message: "Trade not found" });
+  }
+
+  res.json({ message: "Trade deleted" });
+};
+
+/**
+ * CLOSE TRADE
+ */
+exports.closeTrade = async (req, res) => {
+  const trade = await Trade.findOne({
+    _id: req.params.id,
+    userId: req.user.id,
+    status: "OPEN",
+  });
+
+  if (!trade) {
+    return res.status(404).json({ message: "Open trade not found" });
+  }
+
+  const { pips, pnl } = calculatePnL({
+    symbol: trade.symbol,
+    type: trade.type,
+    entryPrice: trade.entryPrice,
+    exitPrice: Number(req.body.exitPrice),
+    lotSize: trade.lotSize,
+  });
+
+  trade.exitPrice = Number(req.body.exitPrice);
+  trade.exitDate = new Date();
+  trade.pips = pips;
+  trade.pnl = pnl;
+  trade.status = "CLOSED";
+
+  await trade.save();
+  res.json(trade);
+};
+
+/**
+ * UPDATE TRADE JOURNAL
+ */
+/**
+ * UPDATE TRADE JOURNAL
+ */
+exports.updateTradeJournal = async (req, res) => {
   try {
-    const trade = await Trade.findOneAndDelete({
+    const trade = await Trade.findOne({
       _id: req.params.id,
-      userId: req.user?.id, // ✅ FIX
+      userId: req.user.id,
     });
 
     if (!trade) {
       return res.status(404).json({ message: "Trade not found" });
     }
 
-    res.json({ message: "Trade deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "Delete failed" });
-  }
-};
-
-/**
- * Close an OPEN trade
- * PUT /api/trades/:id/close
- */
-exports.closeTrade = async (req, res) => {
-  try {
-    const { exitPrice, exitDate } = req.body;
-
-    if (exitPrice == null) {
-      return res.status(400).json({ message: "Exit price is required" });
-    }
-
-    const trade = await Trade.findOne({
-      _id: req.params.id,
-      userId: req.user?.id, // ✅ FIX
-      status: "OPEN",
-    });
-
-    if (!trade) {
-      return res.status(404).json({ message: "Open trade not found" });
-    }
-
-    const { pips, pnl } = calculatePnL({
-      symbol: trade.symbol,
-      type: trade.type,
-      entryPrice: trade.entryPrice,
-      exitPrice: Number(exitPrice),
-      lotSize: trade.lotSize,
-    });
-
-    trade.exitPrice = Number(exitPrice);
-    trade.exitDate = exitDate ? new Date(exitDate) : new Date();
-    trade.pips = pips;
-    trade.pnl = pnl;
-    trade.status = "CLOSED";
+    trade.journal = {
+      preTrade: req.body.preTrade || "",
+      postTrade: req.body.postTrade || "",
+      emotions: req.body.emotions || "",
+      lessons: req.body.lessons || "",
+      tags: req.body.tags || "",
+      rating: req.body.rating ?? 5,
+      checklist: req.body.checklist || {},
+      screenshots: req.body.screenshots || [],
+    };
 
     await trade.save();
-
     res.json(trade);
-  } catch (error) {
-    console.error("Close trade error:", error.message);
-    res.status(500).json({ message: "Failed to close trade" });
+  } catch (err) {
+    console.error("JOURNAL SAVE ERROR:", err);
+    res.status(500).json({ message: "Journal save failed" });
   }
 };

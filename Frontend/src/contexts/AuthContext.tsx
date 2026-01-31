@@ -7,13 +7,15 @@ export function AuthProvider({ children }: { children: any }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 Load user on app start
+  // 🔁 Restore session on refresh (MAIN FIX)
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const res = await API.get("/api/auth/me");
+        // ❌ /api/auth/me
+        // ✅ /auth/me  (because baseURL already has /api)
+        const res = await API.get("/auth/me");
         setUser(res.data);
-      } catch {
+      } catch (err) {
         setUser(null);
       } finally {
         setLoading(false);
@@ -23,14 +25,16 @@ export function AuthProvider({ children }: { children: any }) {
     loadUser();
   }, []);
 
-  // 🔐 LOGOUT (NO navigate here ❌)
+  // 🔐 LOGOUT
   const logout = async () => {
     try {
-      await API.post("/api/auth/logout");
+      // ❌ /api/auth/logout
+      // ✅ /auth/logout
+      await API.post("/auth/logout");
     } catch (err) {
       console.error("Logout error", err);
     } finally {
-      setUser(null); // ✅ clear auth state
+      setUser(null);
     }
   };
 

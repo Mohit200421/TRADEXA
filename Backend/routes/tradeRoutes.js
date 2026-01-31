@@ -6,7 +6,8 @@ const {
   createTrade,
   getTrades,
   deleteTrade,
-  closeTrade, 
+  closeTrade,
+  updateTradeJournal,
 } = require("../controllers/tradeController");
 
 router.post("/", auth, createTrade);
@@ -14,5 +15,7 @@ router.get("/", auth, getTrades);
 router.delete("/:id", auth, deleteTrade);
 router.put("/:id/close", auth, closeTrade);
 
+// ✅ FIX: ADD auth HERE
+router.patch("/:id/journal", auth, updateTradeJournal);
 
 module.exports = router;

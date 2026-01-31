@@ -19,6 +19,7 @@ import TradingViewPro from "./pages/TradingViewPro";
 import Journal from "./pages/Journal";
 import Performance from "./pages/Performance";
 import Market from "./pages/Market";
+import Learn from "./pages/Learn";
 import Community from "./pages/Community";
 import Tools from "./pages/Tools";
 import Profile from "./pages/Profile";
@@ -57,6 +58,8 @@ export default function App() {
             <Route path="/journal" element={<Journal />} />
             <Route path="/performance" element={<Performance />} />
             <Route path="/market" element={<Market />} />
+            <Route path="/learn" element={<Learn />} />
+
             <Route path="/community" element={<Community />} />
             <Route path="/tools" element={<Tools />} />
 

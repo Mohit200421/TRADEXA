@@ -74,10 +74,25 @@ const tradeSchema = new mongoose.Schema(
     },
 
     /* ---------- Journal ---------- */
-    notes: {
-      type: String,
-      trim: true,
-      default: "",
+    journal: {
+      preTrade: { type: String, default: "" },
+      postTrade: { type: String, default: "" },
+      emotions: { type: String, default: "" },
+      lessons: { type: String, default: "" },
+      tags: { type: String, default: "" },
+      rating: { type: Number, default: 5 },
+
+      checklist: {
+        followedPlan: { type: Boolean, default: false },
+        properRisk: { type: Boolean, default: false },
+        goodEntry: { type: Boolean, default: false },
+        patientExit: { type: Boolean, default: false },
+      },
+
+      screenshots: {
+        type: [String],
+        default: [],
+      },
     },
   },
   {

@@ -1,63 +1,93 @@
 /**
- * Instrument-wise PnL Calculator
- * Supports: Forex, XAUUSD, Indices, Crypto
+ * Universal Trading PnL Calculator
+ * Supports: Forex, Metals, Crypto
+ * Account currency: USD
  */
 
-const INSTRUMENT_CONFIG = {
-  // 🔸 Forex (EURUSD, GBPUSD, etc.)
-  FOREX: {
-    pipSize: 0.0001,
-    pipValuePerLot: 10, // 1 lot = $10 per pip
-  },
+const INSTRUMENTS = {
+  // ---------- FOREX ----------
+  EURUSD: { pipSize: 0.0001, contractSize: 100000 },
+  GBPUSD: { pipSize: 0.0001, contractSize: 100000 },
+  AUDUSD: { pipSize: 0.0001, contractSize: 100000 },
+  NZDUSD: { pipSize: 0.0001, contractSize: 100000 },
+  EURGBP: { pipSize: 0.0001, contractSize: 100000 },
+  USDCAD: { pipSize: 0.0001, contractSize: 100000 },
+  USDCHF: { pipSize: 0.0001, contractSize: 100000 },
 
-  // 🔸 Gold
-  XAUUSD: {
-    pipSize: 0.01,
-    pipValuePerLot: 1, // 0.01 lot → $1 per pip
-  },
+  USDJPY: { pipSize: 0.01, contractSize: 100000 },
+  EURJPY: { pipSize: 0.01, contractSize: 100000 },
+  GBPJPY: { pipSize: 0.01, contractSize: 100000 },
 
-  // 🔸 Indices (example)
-  US30: {
-    pipSize: 1,
-    pipValuePerLot: 1,
-  },
+  // ---------- METALS ----------
+  XAUUSD: { pipSize: 0.01, contractSize: 100 },   // Gold
+  XAGUSD: { pipSize: 0.01, contractSize: 5000 },  // Silver
 
-  // 🔸 Crypto (BTC, ETH)
-  CRYPTO: {
-    pipSize: 1,
-    pipValuePerLot: 1,
-  },
+  // ---------- CRYPTO ----------
+  BTCUSD: { pipSize: 1, contractSize: 1 },
+  ETHUSD: { pipSize: 1, contractSize: 1 },
 };
 
-function detectInstrument(symbol) {
-  if (symbol === "XAUUSD") return INSTRUMENT_CONFIG.XAUUSD;
-  if (symbol.endsWith("USD") && symbol.length === 6)
-    return INSTRUMENT_CONFIG.FOREX;
-  if (["US30", "NAS100", "SPX500"].includes(symbol))
-    return INSTRUMENT_CONFIG.US30;
-
-  return INSTRUMENT_CONFIG.CRYPTO;
-}
-
-exports.calculatePnL = ({
+function calculatePnL({
   symbol,
-  side, // BUY | SELL
-  entry,
-  exit,
-  quantity, // lots
-}) => {
-  const config = detectInstrument(symbol);
+  type,        // BUY / SELL or LONG / SHORT
+  entryPrice,
+  exitPrice,
+  lotSize,     // 0.01, 0.1, 1
+}) {
+  const instrument = INSTRUMENTS[symbol];
 
+  if (!instrument) {
+    throw new Error(`Unsupported symbol: ${symbol}`);
+  }
+
+  const { pipSize, contractSize } = instrument;
+
+  // --------------------
+  // PRICE DIFFERENCE
+  // --------------------
   const priceDiff =
-    side === "BUY" ? exit - entry : entry - exit;
+    type === "BUY" || type === "LONG"
+      ? exitPrice - entryPrice
+      : entryPrice - exitPrice;
 
-  const pips = priceDiff / config.pipSize;
+  // --------------------
+  // PIPS
+  // --------------------
+  const pips = priceDiff / pipSize;
 
-  const pnl =
-    pips * config.pipValuePerLot * quantity;
+  // --------------------
+  // PIP VALUE (USD)
+  // --------------------
+  let pipValue;
+
+  // USD quoted instruments
+  if (symbol.endsWith("USD")) {
+    pipValue = pipSize * contractSize * lotSize;
+  }
+  // USD base pairs (USDJPY etc)
+  else if (symbol.startsWith("USD")) {
+    pipValue = (pipSize * contractSize * lotSize) / exitPrice;
+  }
+  // Cross pairs (EURJPY etc) – approximate USD conversion
+  else {
+    pipValue = (pipSize * contractSize * lotSize) / exitPrice;
+  }
+
+  // --------------------
+  // PNL
+  // --------------------
+  const pnl = pips * pipValue;
 
   return {
+    symbol,
+    type,
+    entryPrice,
+    exitPrice,
+    lotSize,
     pips: Number(pips.toFixed(2)),
+    pipValue: Number(pipValue.toFixed(4)),
     pnl: Number(pnl.toFixed(2)),
   };
-};
+}
+
+module.exports = { calculatePnL };

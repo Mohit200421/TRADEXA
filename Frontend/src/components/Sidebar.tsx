@@ -24,6 +24,8 @@ const menuItems = [
   { label: "Journal", path: "/journal", icon: BookOpen },
   { label: "Performance", path: "/performance", icon: BarChart3 },
   { label: "Market", path: "/market", icon: TrendingUp },
+  { label: "Replay", path: "/replay", icon: TrendingUp },
+  { label: "Learn", path: "/learn", icon: BookOpen },
   { label: "Community", path: "/community", icon: Users },
   { label: "Tools", path: "/tools", icon: Wrench },
 ];

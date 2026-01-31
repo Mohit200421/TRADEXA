@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import {
   Bell,
@@ -19,9 +19,24 @@ interface TopbarProps {
   collapsed: boolean;
 }
 
+/* =========================
+   ROUTE → PAGE TITLE MAP
+========================= */
+const PAGE_TITLES: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/trades": "Trades",
+  "/journal": "Journal",
+  "/performance": "Performance",
+  "/market": "Market",
+  "/community": "Community",
+  "/tools": "Tools",
+  "/profile": "Profile",
+};
+
 export default function Topbar({ collapsed }: TopbarProps) {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ FIX
 
   const [time, setTime] = useState<Date>(new Date());
   const [open, setOpen] = useState<boolean>(false);
@@ -30,6 +45,12 @@ export default function Topbar({ collapsed }: TopbarProps) {
   );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  /* =========================
+     CURRENT PAGE TITLE
+  ========================= */
+  const pageTitle =
+    PAGE_TITLES[location.pathname] || "Dashboard";
 
   /* =========================
      LIVE CLOCK
@@ -74,7 +95,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
   ========================= */
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/", { replace: true });
   };
 
   return (
@@ -87,7 +108,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
     >
       {/* LEFT */}
       <div>
-        <h1 className="text-lg font-semibold">Dashboard</h1>
+        <h1 className="text-lg font-semibold">{pageTitle}</h1>
         <p className="text-xs text-text-secondary">
           {time.toLocaleDateString(undefined, {
             weekday: "short",
@@ -124,7 +145,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
             className="flex items-center gap-2 p-1.5 rounded-full hover:bg-border-light"
           >
             <img
-              src={user?.avatar || "/avatar.jpg"}   // ✅ FIX 1: dynamic avatar
+              src={user?.avatar || "/avatar.jpg"}
               alt="User avatar"
               className="w-8 h-8 rounded-full object-cover"
             />
@@ -144,7 +165,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
                 <MenuItem
                   icon={User}
                   label="My Profile"
-                  onClick={() => navigate("/profile")} // ✅ FIX 2
+                  onClick={() => navigate("/profile")}
                 />
                 <MenuItem icon={Settings} label="Settings" />
                 <MenuItem icon={CreditCard} label="Subscription" />
