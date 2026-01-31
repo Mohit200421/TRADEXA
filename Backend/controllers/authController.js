@@ -1,11 +1,12 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
+const { emailOTPTemplate } = require("../utils/emailTemplates");
+
 
 /* =========================
-   REGISTER
+   REGISTER (OTP BASED)
 ========================= */
 const register = async (req, res) => {
   try {
@@ -21,27 +22,27 @@ const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verifyToken = crypto.randomBytes(32).toString("hex");
+
+    // 🔐 Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     await User.create({
       name,
       email,
       password: hashedPassword,
       isEmailVerified: false,
-      emailVerifyToken: verifyToken,
-      emailVerifyExpiry: Date.now() + 24 * 60 * 60 * 1000,
+      emailOTP: otp,
+      emailOTPExpires: Date.now() + 10 * 60 * 1000, // 10 minutes
     });
-
-    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
 
     await sendEmail({
       to: email,
       subject: "Verify your TradeFX account",
-      html: `<a href="${verifyLink}">Verify Email</a>`,
+      html: `<p>Your OTP is <b>${otp}</b></p><p>Expires in 10 minutes</p>`,
     });
 
     res.json({
-      message: "Registered successfully. Please verify your email.",
+      message: "Registered successfully. OTP sent to email.",
     });
   } catch (err) {
     console.error(err);
@@ -50,34 +51,43 @@ const register = async (req, res) => {
 };
 
 /* =========================
-   VERIFY EMAIL
+   VERIFY EMAIL OTP
 ========================= */
-const verifyEmail = async (req, res) => {
+const verifyEmailOTP = async (req, res) => {
   try {
-    const { token } = req.query;
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP required" });
+    }
 
     const user = await User.findOne({
-      emailVerifyToken: token,
-      emailVerifyExpiry: { $gt: Date.now() },
+      email,
+      emailOTP: otp,
+      emailOTPExpires: { $gt: Date.now() },
     });
 
     if (!user) {
-      return res.status(400).send("Invalid or expired verification link");
+      return res.status(400).json({
+        message: "Invalid or expired OTP",
+      });
     }
 
     user.isEmailVerified = true;
-    user.emailVerifyToken = undefined;
-    user.emailVerifyExpiry = undefined;
+    user.emailOTP = undefined;
+    user.emailOTPExpires = undefined;
+
     await user.save();
 
-    res.send("Email verified successfully. You can login.");
+    res.json({ message: "Email verified successfully" });
   } catch (err) {
-    res.status(500).send("Verification failed");
+    console.error(err);
+    res.status(500).json({ message: "OTP verification failed" });
   }
 };
 
 /* =========================
-   LOGIN  (🔥 COOKIE REMOVED)
+   LOGIN
 ========================= */
 const login = async (req, res) => {
   try {
@@ -105,7 +115,6 @@ const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 🔥 NO COOKIE — PURE TOKEN
     res.json({
       token,
       user: {
@@ -124,7 +133,6 @@ const login = async (req, res) => {
    LOGOUT
 ========================= */
 const logout = async (req, res) => {
-  // token frontend वर delete होतो
   res.json({ message: "Logged out successfully" });
 };
 
@@ -136,9 +144,53 @@ const getMe = async (req, res) => {
   res.json(user);
 };
 
+
+
+/* =========================
+   RESEND EMAIL OTP
+========================= */
+const resendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email required" });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    // 🔐 Generate new OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    user.emailOTP = otp;
+    user.emailOTPExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+    await user.save();
+
+    await sendEmail({
+      to: email,
+      subject: "Your new TradeFX OTP",
+      html: emailOTPTemplate(otp),
+    });
+
+    res.json({ message: "OTP resent successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to resend OTP" });
+  }
+};
+
 module.exports = {
   register,
-  verifyEmail,
+  verifyEmailOTP,
+  resendEmailOTP, // ✅ add
   login,
   logout,
   getMe,

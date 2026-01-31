@@ -58,10 +58,14 @@ export default function Register() {
 
   
       toast.success(
-        "Account created! 📧 Please check your email to verify your account."
+        "Account created! 📧 OTP sent to your email."
       );
-  
-      navigate("/login"); // ✅ go to login, NOT dashboard
+      
+      // ✅ redirect to OTP page with email
+      navigate("/verify-email-otp", {
+        state: { email: form.email },
+      });
+       // ✅ go to login, NOT dashboard
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Registration failed";

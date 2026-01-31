@@ -19,16 +19,22 @@ const userSchema = new mongoose.Schema(
     // 🧑 Profile photo
     avatar: {
       type: String,
-      default: "/avatar.jpg", // ✅ default profile image
+      default: "/avatar.jpg",
     },
 
-    // 🔐 Email verification
+    // 🔐 Email verification (OTP based)
     isEmailVerified: {
       type: Boolean,
       default: false,
     },
-    emailVerifyToken: String,
-    emailVerifyExpiry: Date,
+
+    emailOTP: {
+      type: String,
+    },
+
+    emailOTPExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

@@ -1,8 +1,6 @@
-
-
 import { useEffect, useMemo, useState } from "react";
 import StatCard from "../components/StatCard";
-import { DollarSign, Target } from "lucide-react";
+import { DollarSign, Target, TrendingUp } from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
 
@@ -16,6 +14,8 @@ export default function Dashboard() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
   /* =====================
      FETCH TRADES
   ===================== */
@@ -25,9 +25,7 @@ export default function Dashboard() {
         const res = await API.get("/trades");
         setTrades(res.data || []);
       } catch (err: any) {
-        toast.error(
-          err.response?.data?.message || "Failed to load dashboard data"
-        );
+        toast.error(err.response?.data?.message || "Failed to load dashboard");
       } finally {
         setLoading(false);
       }
@@ -57,36 +55,28 @@ export default function Dashboard() {
       ? 0
       : Math.round((winningTrades.length / closedTrades.length) * 100);
 
-  const avgWin =
-    winningTrades.length === 0
-      ? 0
-      : winningTrades.reduce((s, t) => s + t.pnl, 0) /
-        winningTrades.length;
+  const totalProfit = winningTrades.reduce((s, t) => s + t.pnl, 0);
+  const totalLoss = Math.abs(losingTrades.reduce((s, t) => s + t.pnl, 0));
 
-  const avgLoss =
-    losingTrades.length === 0
-      ? 0
-      : losingTrades.reduce((s, t) => s + t.pnl, 0) /
-        losingTrades.length;
+  const profitFactor =
+    totalLoss === 0 ? null : (totalProfit / totalLoss).toFixed(2);
 
-  const bestTrade =
+  const bestTradeObj =
     closedTrades.length === 0
-      ? 0
-      : Math.max(...closedTrades.map(t => t.pnl));
-
-  const worstTrade =
-    closedTrades.length === 0
-      ? 0
-      : Math.min(...closedTrades.map(t => t.pnl));
+      ? null
+      : closedTrades.reduce((best, t) =>
+          t.pnl > best.pnl ? t : best
+        );
 
   /* =====================
      MONTHLY P&L (DATE WISE)
   ===================== */
-  const dailyPnL: Record<number, number> = {};
+  const dailyTrades: Record<number, Trade[]> = {};
 
   closedTrades.forEach(trade => {
     const day = new Date(trade.entryDate).getDate();
-    dailyPnL[day] = (dailyPnL[day] || 0) + trade.pnl;
+    if (!dailyTrades[day]) dailyTrades[day] = [];
+    dailyTrades[day].push(trade);
   });
 
   if (loading) return null;
@@ -94,66 +84,55 @@ export default function Dashboard() {
   return (
     <>
       {/* =====================
-          TOP STAT CARDS
+          TOP STATS
       ===================== */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
-        {/* TOTAL P&L */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           title="TOTAL P&L"
           value={`${totalPnL >= 0 ? "+" : ""}$${totalPnL.toFixed(2)}`}
           subtitle={`${closedTrades.length} trades`}
           icon={DollarSign}
-          valueClass={
-            totalPnL >= 0 ? "text-green-500" : "text-red-500"
-          }
+          valueClass={totalPnL >= 0 ? "text-green-500" : "text-red-500"}
         />
 
-        {/* WIN RATE */}
+        <StatCard title="WIN RATE" value={`${winRate}%`} icon={Target} />
+
         <StatCard
-          title="WIN RATE"
-          value={`${winRate}%`}
-          icon={Target}
-          footer={
-            <div className="mt-3 h-2 w-full bg-border-light rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 transition-all"
-                style={{ width: `${winRate}%` }}
-              />
-            </div>
+          title="PROFIT FACTOR"
+          value={profitFactor ? profitFactor : "--"}
+          icon={TrendingUp}
+          valueClass={
+            profitFactor && Number(profitFactor) >= 1
+              ? "text-green-500"
+              : "text-red-500"
           }
         />
       </section>
 
       {/* =====================
-          PERFORMANCE + MONTHLY P&L
+          MONTHLY P&L
       ===================== */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-        {/* Performance */}
         <div className="xl:col-span-2 card p-5">
-          <h3 className="font-semibold mb-4">Performance</h3>
-
-          <div className="h-64 flex items-center justify-center text-text-secondary border border-dashed border-border rounded-lg">
-            Performance chart
-          </div>
-        </div>
-
-        {/* Monthly P&L */}
-        <div className="card p-5">
           <h3 className="font-semibold mb-4">Monthly P&amp;L</h3>
 
           <div className="grid grid-cols-7 gap-2 text-xs">
             {Array.from({ length: 31 }).map((_, i) => {
               const day = i + 1;
-              const pnl = dailyPnL[day];
-              const hasTrade = pnl !== undefined;
+              const tradesForDay = dailyTrades[day];
+              const pnl =
+                tradesForDay?.reduce((s, t) => s + t.pnl, 0) ?? null;
 
               return (
                 <div
                   key={day}
-                  className="h-10 rounded-lg flex flex-col justify-center items-center bg-border-light"
+                  onClick={() => tradesForDay && setSelectedDay(day)}
+                  className={`h-12 rounded-lg flex flex-col justify-center items-center cursor-pointer transition
+                    ${pnl === null ? "bg-border-light" :
+                      pnl >= 0 ? "bg-green-500/10" : "bg-red-500/10"}`}
                 >
                   <span className="font-medium">{day}</span>
-                  {hasTrade && (
+                  {pnl !== null && (
                     <span
                       className={`font-semibold ${
                         pnl >= 0 ? "text-green-500" : "text-red-500"
@@ -167,39 +146,80 @@ export default function Dashboard() {
             })}
           </div>
         </div>
+
+        {/* =====================
+            TOP PERFORMANCE
+        ===================== */}
+        <div className="card p-5">
+          <h3 className="font-semibold mb-3">Top Performance</h3>
+
+          {bestTradeObj ? (
+            <div className="rounded-lg bg-green-500/10 p-4">
+              <p className="text-sm text-text-secondary">Best Trade</p>
+              <p className="text-xl font-semibold text-green-500">
+                +${bestTradeObj.pnl.toFixed(2)}
+              </p>
+              <p className="text-xs text-text-secondary">
+                {new Date(bestTradeObj.entryDate).toDateString()}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-text-secondary">
+              No trades yet
+            </p>
+          )}
+        </div>
       </section>
 
       {/* =====================
-          BOTTOM SECTION
+          QUICK STATS
       ===================== */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
-        <div className="card p-5">
-          <h3 className="font-semibold mb-3">Open Positions</h3>
-          <p className="text-sm text-text-secondary">
-            No open positions
-          </p>
-        </div>
+      <section className="card p-5 mt-6">
+        <h3 className="font-semibold mb-4">Quick Stats</h3>
 
-        <div className="card p-5">
-          <h3 className="font-semibold mb-3">Top Performers</h3>
-          <p className="text-sm text-text-secondary">
-            {bestTrade > 0
-              ? `Best trade: $${bestTrade.toFixed(2)}`
-              : "No trading data yet"}
-          </p>
-        </div>
-
-        <div className="card p-5">
-          <h3 className="font-semibold mb-4">Quick Stats</h3>
-
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <QuickStat label="Avg Win" value={`$${avgWin.toFixed(2)}`} />
-            <QuickStat label="Avg Loss" value={`$${avgLoss.toFixed(2)}`} />
-            <QuickStat label="Best Trade" value={`$${bestTrade.toFixed(2)}`} />
-            <QuickStat label="Worst Trade" value={`$${worstTrade.toFixed(2)}`} />
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <QuickStat label="Total Trades" value={closedTrades.length} />
+          <QuickStat label="Winning Trades" value={winningTrades.length} />
+          <QuickStat label="Losing Trades" value={losingTrades.length} />
+          <QuickStat label="Profit Factor" value={profitFactor ?? "--"} />
         </div>
       </section>
+
+      {/* =====================
+          DAY TRADES MODAL
+      ===================== */}
+      {selectedDay && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-bg rounded-lg p-6 w-full max-w-md">
+            <h3 className="font-semibold mb-3">
+              Trades on Day {selectedDay}
+            </h3>
+
+            <div className="space-y-2">
+              {dailyTrades[selectedDay].map((t, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between text-sm border-b pb-1"
+                >
+                  <span>{new Date(t.entryDate).toLocaleTimeString()}</span>
+                  <span
+                    className={t.pnl >= 0 ? "text-green-500" : "text-red-500"}
+                  >
+                    ${t.pnl.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setSelectedDay(null)}
+              className="mt-4 w-full btn-secondary"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -207,17 +227,11 @@ export default function Dashboard() {
 /* =====================
    SMALL COMPONENT
 ===================== */
-function QuickStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function QuickStat({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-lg bg-border-light p-3">
+    <div className="rounded-lg bg-border-light p-4 text-center">
       <p className="text-xs text-text-secondary">{label}</p>
-      <p className="font-semibold">{value}</p>
+      <p className="font-semibold text-lg">{value}</p>
     </div>
   );
 }

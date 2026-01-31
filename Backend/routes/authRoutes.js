@@ -4,7 +4,8 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 const {
   register,
-  verifyEmail,
+  verifyEmailOTP,
+  resendEmailOTP,
   login,
   logout,
   getMe,
@@ -14,9 +15,10 @@ const {
    AUTH ROUTES
 ========================= */
 
-// Register + Email verify
+// Register + OTP verification
 router.post("/register", register);
-router.get("/verify-email", verifyEmail);
+router.post("/verify-email-otp", verifyEmailOTP);
+router.post("/resend-email-otp", resendEmailOTP);
 
 // Login / Logout
 router.post("/login", login);
@@ -24,6 +26,8 @@ router.post("/logout", auth, logout);
 
 // Authenticated user
 router.get("/me", auth, getMe);
+
+
 
 // Health test
 router.get("/test", (req, res) => {
