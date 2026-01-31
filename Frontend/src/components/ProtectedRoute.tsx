@@ -1,12 +1,19 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
-export default function ProtectedRoute({ children }: any) {
+export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) return null; // optional loader
+  // ✅ Always wait for auth restore
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="text-sm text-gray-500">Loading...</span>
+      </div>
+    );
+  }
 
-  // ✅ FIX: remove replace
+  // ✅ Redirect ONLY after loading is finished
   if (!user) {
     return <Navigate to="/login" />;
   }

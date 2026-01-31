@@ -7,16 +7,23 @@ export function AuthProvider({ children }: { children: any }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔁 Restore session on refresh (MAIN FIX)
   useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    // 🔥 If no token → user is logged out
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     const loadUser = async () => {
       try {
-        // ❌ /api/auth/me
-        // ✅ /auth/me  (because baseURL already has /api)
         const res = await API.get("/auth/me");
         setUser(res.data);
       } catch (err) {
-        setUser(null);
+        // ✅ DO NOT LOGOUT HERE
+        console.warn("Auth restore failed, keeping session");
       } finally {
         setLoading(false);
       }
@@ -25,28 +32,13 @@ export function AuthProvider({ children }: { children: any }) {
     loadUser();
   }, []);
 
-  // 🔐 LOGOUT
-  const logout = async () => {
-    try {
-      // ❌ /api/auth/logout
-      // ✅ /auth/logout
-      await API.post("/auth/logout");
-    } catch (err) {
-      console.error("Logout error", err);
-    } finally {
-      setUser(null);
-    }
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        setUser,
-        loading,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );
