@@ -4,13 +4,10 @@ module.exports = (req, res, next) => {
   try {
     let token = null;
 
-    // 1️⃣ Cookie (browser)
-    if (req.cookies && req.cookies.token) {
-      token = req.cookies.token;
-    }
-
-    // 2️⃣ Authorization header (fallback)
-    if (!token && req.headers.authorization) {
+    /* =========================
+       🔐 TOKEN FROM HEADER ONLY
+    ========================= */
+    if (req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts[0] === "Bearer" && parts[1]) {
         token = parts[1];
