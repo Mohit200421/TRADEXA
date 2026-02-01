@@ -1,21 +1,16 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
-  // ✅ Always wait for auth restore
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="text-sm text-gray-500">Loading...</span>
-      </div>
-    );
-  }
+  // 🛑 Never redirect during auth restore
+  if (loading) return null;
 
-  // ✅ Redirect ONLY after loading is finished
-  if (!user) {
-    return <Navigate to="/login" />;
+  // 🧠 Only redirect if user is TRULY logged out
+  if (!user && !localStorage.getItem("token")) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;
