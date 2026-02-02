@@ -25,43 +25,45 @@ const app = express();
 app.set("trust proxy", 1);
 
 /* =========================
-   ALLOWED ORIGINS
+   CORS CONFIG
 ========================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://tradexa-lilac.vercel.app",
-];
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow server-to-server & Postman
+    if (!origin) return callback(null, true);
+
+    // Allow localhost
+    if (origin === "http://localhost:5173") {
+      return callback(null, true);
+    }
+
+    // Allow ALL vercel deployments (prod + preview)
+    if (origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+
+    callback(new Error("CORS blocked: " + origin));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
 
 /* =========================
-   CORS (REST API)
+   APPLY CORS (VERY IMPORTANT ORDER)
 ========================= */
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow server-to-server & mobile apps
-      if (!origin) return callback(null, true);
-
-      // allow localhost + ALL vercel preview deployments
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app")
-      ) {
-        return callback(null, true);
-      }
-
-      callback(new Error("CORS not allowed"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-/* =========================
-   MIDDLEWARES
-========================= */
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+// ✅ Explicit OPTIONS handler (SAFE)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+  } else {
+    next();
+  }
+});
 
 /* =========================
    HTTP SERVER
@@ -74,13 +76,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        origin === "http://localhost:5173" ||
-        origin.endsWith(".vercel.app")
-      ) {
-        return callback(null, true);
-      }
+      if (!origin) return callback(null, true);
+      if (origin === "http://localhost:5173") return callback(null, true);
+      if (origin.endsWith(".vercel.app")) return callback(null, true);
       callback(new Error("Socket CORS blocked"));
     },
     credentials: true,
@@ -109,7 +107,6 @@ io.on("connection", (socket) => {
       if (!message) return;
 
       const users = message.reactions.get(emoji) || [];
-
       message.reactions.set(
         emoji,
         users.includes(user)
@@ -153,11 +150,11 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   DATABASE + SERVER
+   DB + SERVER
 ========================= */
 connectDB();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
