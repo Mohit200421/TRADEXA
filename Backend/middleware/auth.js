@@ -2,26 +2,19 @@ const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
   try {
-    let token = null;
+    const authHeader = req.headers.authorization;
 
-    if (req.headers.authorization) {
-      const parts = req.headers.authorization.split(" ");
-      if (parts[0] === "Bearer" && parts[1]) {
-        token = parts[1];
-      }
-    }
-
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ✅ FIX: normalize user object
+    // ✅ ONLY store what actually exists in JWT
     req.user = {
-      id: decoded.userId || decoded.id,
-      email: decoded.email,
-      name: decoded.name,
+      id: decoded.userId,
     };
 
     next();
