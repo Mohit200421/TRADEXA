@@ -25,50 +25,47 @@ const app = express();
 app.set("trust proxy", 1);
 
 /* =========================
-   CORS CONFIG
-========================= */
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow server-to-server & Postman
-    if (!origin) return callback(null, true);
-
-    // Allow localhost
-    if (origin === "http://localhost:5173") {
-      return callback(null, true);
-    }
-
-    // Allow ALL vercel deployments (prod + preview)
-    if (origin.endsWith(".vercel.app")) {
-      return callback(null, true);
-    }
-
-    callback(new Error("CORS blocked: " + origin));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-/* =========================
-   APPLY CORS (VERY IMPORTANT ORDER)
-========================= */
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(cookieParser());
-
-// ✅ Explicit OPTIONS handler (SAFE)
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.sendStatus(204);
-  } else {
-    next();
-  }
-});
-
-/* =========================
    HTTP SERVER
 ========================= */
 const server = http.createServer(app);
+
+/* =========================
+   CORS CONFIG (FIXED)
+========================= */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tradexa-lilac.vercel.app",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow mobile apps / curl / postman
+      if (!origin) return callback(null, true);
+
+      // allow exact matches
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // 🔥 allow ALL vercel preview deployments
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS not allowed"), false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+/* =========================
+   MIDDLEWARES
+========================= */
+app.use(express.json());
+app.use(cookieParser());
 
 /* =========================
    SOCKET.IO
@@ -77,9 +74,13 @@ const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (origin === "http://localhost:5173") return callback(null, true);
-      if (origin.endsWith(".vercel.app")) return callback(null, true);
-      callback(new Error("Socket CORS blocked"));
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
+      }
+      return callback(new Error("Socket CORS blocked"), false);
     },
     credentials: true,
   },
@@ -107,6 +108,7 @@ io.on("connection", (socket) => {
       if (!message) return;
 
       const users = message.reactions.get(emoji) || [];
+
       message.reactions.set(
         emoji,
         users.includes(user)
@@ -150,11 +152,11 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   DB + SERVER
+   DATABASE + SERVER
 ========================= */
 connectDB();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
 });
