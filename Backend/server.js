@@ -18,11 +18,40 @@ const CommunityMessage = require("./models/CommunityMessage");
 const connectDB = require("./config/db");
 
 const app = express();
+app.set("trust proxy", 1);
 
 /* =========================
-   TRUST PROXY (RENDER)
+   ALLOWED ORIGINS (FIX)
 ========================= */
-app.set("trust proxy", 1);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tradexa-lilac.vercel.app",
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") // ✅ allow ALL vercel preview domains
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS blocked: " + origin));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+/* =========================
+   MIDDLEWARES
+========================= */
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(cookieParser());
 
 /* =========================
    HTTP SERVER
@@ -30,100 +59,25 @@ app.set("trust proxy", 1);
 const server = http.createServer(app);
 
 /* =========================
-   CORS CONFIG (FIXED)
-========================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://tradexa-lilac.vercel.app",
-];
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow mobile apps / curl / postman
-      if (!origin) return callback(null, true);
-
-      // allow exact matches
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // 🔥 allow ALL vercel preview deployments
-      if (origin.endsWith(".vercel.app")) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("CORS not allowed"), false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-/* =========================
-   MIDDLEWARES
-========================= */
-app.use(express.json());
-app.use(cookieParser());
-
-/* =========================
-   SOCKET.IO
+   SOCKET.IO (NO EXTRA FILE)
 ========================= */
 const io = new Server(server, {
-  cors: {
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app")
-      ) {
-        return callback(null, true);
-      }
-      return callback(new Error("Socket CORS blocked"), false);
-    },
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
-io.on("connection", (socket) => {
+io.on("connection", socket => {
   console.log("🟢 Socket connected:", socket.id);
 
-  socket.on("join-channel", (channelId) => {
+  socket.on("join-channel", channelId => {
     socket.join(channelId);
   });
 
-  socket.on("send-message", async (data) => {
+  socket.on("send-message", async data => {
     try {
       const message = await CommunityMessage.create(data);
       io.to(message.channel).emit("new-message", message);
     } catch (err) {
       console.error("❌ Message save failed:", err);
-    }
-  });
-
-  socket.on("toggle-reaction", async ({ messageId, emoji, user }) => {
-    try {
-      const message = await CommunityMessage.findById(messageId);
-      if (!message) return;
-
-      const users = message.reactions.get(emoji) || [];
-
-      message.reactions.set(
-        emoji,
-        users.includes(user)
-          ? users.filter((u) => u !== user)
-          : [...users, user]
-      );
-
-      await message.save();
-
-      io.to(message.channel).emit("reaction-updated", {
-        messageId,
-        reactions: Object.fromEntries(message.reactions),
-      });
-    } catch (err) {
-      console.error("❌ Reaction update failed:", err);
     }
   });
 
@@ -152,11 +106,11 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   DATABASE + SERVER
+   START SERVER
 ========================= */
 connectDB();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
