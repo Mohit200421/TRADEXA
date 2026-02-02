@@ -20,9 +20,38 @@ const connectDB = require("./config/db");
 const app = express();
 
 /* =========================
+   TRUST PROXY (REQUIRED FOR RENDER)
+========================= */
+app.set("trust proxy", 1);
+
+/* =========================
    HTTP SERVER
 ========================= */
 const server = http.createServer(app);
+
+/* =========================
+   CORS (REST API)
+========================= */
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://tradexa-lilac.vercel.app",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Allow preflight
+app.options("*", cors());
+
+/* =========================
+   MIDDLEWARES
+========================= */
+app.use(express.json());
+app.use(cookieParser());
 
 /* =========================
    SOCKET.IO
@@ -31,60 +60,29 @@ const io = new Server(server, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "https://trade-fx-flax.vercel.app",
+      "https://tradexa-lilac.vercel.app",
     ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
 io.on("connection", socket => {
   console.log("🟢 Socket connected:", socket.id);
 
-  /* =========================
-     JOIN CHANNEL (ROOM)
-  ========================= */
   socket.on("join-channel", channelId => {
     socket.join(channelId);
-    console.log(`📥 ${socket.id} joined channel: ${channelId}`);
   });
 
-  /* =========================
-     SEND MESSAGE
-  ========================= */
   socket.on("send-message", async data => {
     try {
-      const message = await CommunityMessage.create({
-        channel: data.channel,
-        parentId: data.parentId || null,
-
-        type: data.type,
-        user: data.user,
-        avatar: data.avatar,
-        time: data.time,
-
-        text: data.text,
-
-        symbol: data.symbol,
-        side: data.side,
-        entry: data.entry,
-        sl: data.sl,
-        tp: data.tp,
-
-        imageUrl: data.imageUrl,
-        fileUrl: data.fileUrl,
-        fileName: data.fileName,
-      });
-
-      // 🔥 Emit SAVED message (this fixes send issue)
+      const message = await CommunityMessage.create(data);
       io.to(message.channel).emit("new-message", message);
     } catch (err) {
-      console.error("❌ Failed to save community message:", err);
+      console.error("❌ Message save failed:", err);
     }
   });
 
-  /* =========================
-     TOGGLE REACTION
-  ========================= */
   socket.on("toggle-reaction", async ({ messageId, emoji, user }) => {
     try {
       const message = await CommunityMessage.findById(messageId);
@@ -92,14 +90,12 @@ io.on("connection", socket => {
 
       const users = message.reactions.get(emoji) || [];
 
-      if (users.includes(user)) {
-        message.reactions.set(
-          emoji,
-          users.filter(u => u !== user)
-        );
-      } else {
-        message.reactions.set(emoji, [...users, user]);
-      }
+      message.reactions.set(
+        emoji,
+        users.includes(user)
+          ? users.filter(u => u !== user)
+          : [...users, user]
+      );
 
       await message.save();
 
@@ -116,25 +112,6 @@ io.on("connection", socket => {
     console.log("🔴 Socket disconnected:", socket.id);
   });
 });
-
-/* =========================
-   CORS (REST API)
-========================= */
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://trade-fx-flax.vercel.app",
-    ],
-    credentials: false,
-  })
-);
-
-/* =========================
-   MIDDLEWARES
-========================= */
-app.use(express.json());
-app.use(cookieParser());
 
 /* =========================
    ROUTES
