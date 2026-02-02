@@ -20,7 +20,7 @@ const connectDB = require("./config/db");
 const app = express();
 
 /* =========================
-   TRUST PROXY (REQUIRED FOR RENDER)
+   TRUST PROXY (RENDER)
 ========================= */
 app.set("trust proxy", 1);
 
@@ -30,22 +30,27 @@ app.set("trust proxy", 1);
 const server = http.createServer(app);
 
 /* =========================
-   CORS (REST API)
+   CORS CONFIG (FIXED)
 ========================= */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://tradexa-lilac.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://tradexa-lilac.vercel.app",
-    ],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-// Allow preflight
-app.options("*", cors());
 
 /* =========================
    MIDDLEWARES
@@ -54,15 +59,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 /* =========================
-   SOCKET.IO
+   SOCKET.IO (FIXED)
 ========================= */
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://tradexa-lilac.vercel.app",
-    ],
-    methods: ["GET", "POST"],
+    origin: allowedOrigins,
     credentials: true,
   },
 });
@@ -133,7 +134,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   DATABASE + SERVER
+   START SERVER
 ========================= */
 connectDB();
 
