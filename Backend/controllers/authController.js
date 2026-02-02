@@ -4,13 +4,13 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 const { emailOTPTemplate } = require("../utils/emailTemplates");
 
-
 /* =========================
    REGISTER (OTP BASED)
 ========================= */
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    console.log("Registration attempt for email:", email);
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields required" });
@@ -18,6 +18,7 @@ const register = async (req, res) => {
 
     const exists = await User.findOne({ email });
     if (exists) {
+      console.log("User already exists for email:", email);
       return res.status(400).json({ message: "Email already exists" });
     }
 
@@ -25,6 +26,7 @@ const register = async (req, res) => {
 
     // 🔐 Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log("Generated OTP for", email, ":", otp);
 
     await User.create({
       name,
@@ -35,17 +37,19 @@ const register = async (req, res) => {
       emailOTPExpires: Date.now() + 10 * 60 * 1000, // 10 minutes
     });
 
+    console.log("User created, sending email to:", email);
     await sendEmail({
       to: email,
       subject: "Verify your TradeFX account",
       html: `<p>Your OTP is <b>${otp}</b></p><p>Expires in 10 minutes</p>`,
     });
 
+    console.log("Registration successful for:", email);
     res.json({
       message: "Registered successfully. OTP sent to email.",
     });
   } catch (err) {
-    console.error(err);
+    console.error("Registration error:", err);
     res.status(500).json({ message: "Registration failed" });
   }
 };
@@ -91,12 +95,17 @@ const verifyEmailOTP = async (req, res) => {
 ========================= */
 const login = async (req, res) => {
   try {
+    console.log("Login attempt for email:", req.body.email);
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) {
+      console.log("User not found for email:", email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    console.log("User found, email verified:", user.isEmailVerified);
 
     if (!user.isEmailVerified) {
       return res.status(403).json({
@@ -105,15 +114,17 @@ const login = async (req, res) => {
     }
 
     const match = await bcrypt.compare(password, user.password);
+    console.log("Password match result:", match);
+
     if (!match) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    console.log("Login successful for user:", user.email);
 
     res.json({
       token,
@@ -124,7 +135,7 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
     res.status(500).json({ message: "Login failed" });
   }
 };
@@ -143,8 +154,6 @@ const getMe = async (req, res) => {
   const user = await User.findById(req.userId).select("-password");
   res.json(user);
 };
-
-
 
 /* =========================
    RESEND EMAIL OTP
