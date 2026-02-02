@@ -18,38 +18,46 @@ const CommunityMessage = require("./models/CommunityMessage");
 const connectDB = require("./config/db");
 
 const app = express();
+
+/* =========================
+   TRUST PROXY (RENDER)
+========================= */
 app.set("trust proxy", 1);
 
 /* =========================
-   ALLOWED ORIGINS (FIX)
+   ALLOWED ORIGINS
 ========================= */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://tradexa-lilac.vercel.app",
+  "https://tradexa-o20hs81uv-mohit200421s-projects.vercel.app",
+  "https://tradexa-1jkcgatup-mohit200421s-projects.vercel.app",
 ];
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+/* =========================
+   CORS (REST API)
+========================= */
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow server-to-server & curl/postman
+      if (!origin) return callback(null, true);
 
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith(".vercel.app") // ✅ allow ALL vercel preview domains
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS blocked: " + origin));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("CORS not allowed"), false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 /* =========================
    MIDDLEWARES
 ========================= */
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -59,10 +67,14 @@ app.use(cookieParser());
 const server = http.createServer(app);
 
 /* =========================
-   SOCKET.IO (NO EXTRA FILE)
+   SOCKET.IO
 ========================= */
 const io = new Server(server, {
-  cors: corsOptions,
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
 });
 
 io.on("connection", socket => {
@@ -78,6 +90,30 @@ io.on("connection", socket => {
       io.to(message.channel).emit("new-message", message);
     } catch (err) {
       console.error("❌ Message save failed:", err);
+    }
+  });
+
+  socket.on("toggle-reaction", async ({ messageId, emoji, user }) => {
+    try {
+      const message = await CommunityMessage.findById(messageId);
+      if (!message) return;
+
+      const users = message.reactions.get(emoji) || [];
+      message.reactions.set(
+        emoji,
+        users.includes(user)
+          ? users.filter(u => u !== user)
+          : [...users, user]
+      );
+
+      await message.save();
+
+      io.to(message.channel).emit("reaction-updated", {
+        messageId,
+        reactions: Object.fromEntries(message.reactions),
+      });
+    } catch (err) {
+      console.error("❌ Reaction update failed:", err);
     }
   });
 
@@ -106,7 +142,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   START SERVER
+   DATABASE + SERVER
 ========================= */
 connectDB();
 
