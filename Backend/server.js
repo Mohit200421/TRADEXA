@@ -144,7 +144,20 @@ app.use("/api/community", communityRoutes);
    HEALTH CHECK
 ========================= */
 app.get("/", (req, res) => {
+  console.log(
+    "Health check called from:",
+    req.headers.origin || "unknown origin"
+  );
   res.send("Trading Journal Backend Running ✅");
+});
+
+/* =========================
+   TEST LOGIN ENDPOINT
+========================= */
+app.post("/api/auth/test-login", (req, res) => {
+  console.log("Test login endpoint called with body:", req.body);
+  console.log("Headers:", req.headers);
+  res.json({ message: "Test login endpoint working", received: req.body });
 });
 
 /* =========================
