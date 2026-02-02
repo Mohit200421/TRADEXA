@@ -107,11 +107,12 @@ const login = async (req, res) => {
 
     console.log("User found, email verified:", user.isEmailVerified);
 
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Please verify your email first",
-      });
-    }
+    // TEMPORARY: Bypass email verification for debugging
+    // if (!user.isEmailVerified) {
+    //   return res.status(403).json({
+    //     message: "Please verify your email first",
+    //   });
+    // }
 
     const match = await bcrypt.compare(password, user.password);
     console.log("Password match result:", match);

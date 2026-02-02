@@ -1,4 +1,10 @@
 require("dotenv").config();
+console.log("Environment variables loaded:");
+console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
+console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
+console.log("EMAIL_USER exists:", !!process.env.EMAIL_USER);
+console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -77,14 +83,14 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log(" Socket connected:", socket.id);
 
-  socket.on("join-channel", channelId => {
+  socket.on("join-channel", (channelId) => {
     socket.join(channelId);
   });
 
-  socket.on("send-message", async data => {
+  socket.on("send-message", async (data) => {
     try {
       const message = await CommunityMessage.create(data);
       io.to(message.channel).emit("new-message", message);
@@ -102,7 +108,7 @@ io.on("connection", socket => {
       message.reactions.set(
         emoji,
         users.includes(user)
-          ? users.filter(u => u !== user)
+          ? users.filter((u) => u !== user)
           : [...users, user]
       );
 
