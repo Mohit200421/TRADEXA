@@ -1,100 +1,102 @@
-import { useState } from "react";
-import API from "../api/axios";
-import { useAuth } from "../contexts/AuthContext";
-import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { useProfile } from "../contexts/ProfileContext";
+import AvatarUpload from "../components/AvatarUpload";
 
-export default function Profile() {
-  const { user, setUser } = useAuth();
-  const [name, setName] = useState(user?.name || "");
-  const [loading, setLoading] = useState(false);
+const Profile = () => {
+  const { profile, loading } = useProfile();
 
-  // 🖼️ PHOTO UPLOAD
-  const handlePhotoChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500">Loading profile...</p>
+      </div>
+    );
+  }
 
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    try {
-      setLoading(true);
-      const res = await API.put(
-        "/api/user/profile-photo",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      setUser(res.data);
-      toast.success("Profile photo updated");
-    } catch {
-      toast.error("Upload failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✏️ NAME UPDATE
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      const res = await API.put("/api/user/profile", { name });
-      setUser(res.data);
-      toast.success("Profile updated");
-    } catch {
-      toast.error("Update failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!profile) {
+    return (
+      <div className="max-w-xl mx-auto mt-16 text-center">
+        <h2 className="text-2xl font-semibold mb-4">
+          Complete Your Trader Profile
+        </h2>
+        <p className="text-gray-500 mb-6">
+          Your profile helps personalize your trading experience.
+        </p>
+        <Link
+          to="/profile/edit"
+          className="px-6 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+        >
+          Create Profile
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-xl mx-auto mt-10 bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-      <h2 className="text-2xl font-bold mb-6">My Profile</h2>
+    <div className="max-w-3xl mx-auto mt-10 p-6 bg-white dark:bg-slate-900 rounded-xl shadow">
+      {/* Header */}
+      <div className="flex items-center gap-6">
+        <AvatarUpload />
 
-      {/* Avatar */}
-      <div className="flex items-center gap-6 mb-6">
-        <img
-          src={user?.avatar || "/avatar.jpg"}
-          className="w-24 h-24 rounded-full object-cover border"
-        />
-
-        <label className="cursor-pointer">
-          <input type="file" hidden onChange={handlePhotoChange} />
-          <span className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
-            Change Photo
-          </span>
-        </label>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {profile.fullName || "Unnamed Trader"}
+          </h1>
+          <p className="text-gray-500">@{profile.username}</p>
+          <p className="text-sm text-gray-400 mt-1">
+            {profile.experienceLevel} Trader
+          </p>
+        </div>
       </div>
 
-      {/* Name */}
-      <div className="mb-4">
-        <label className="text-sm text-gray-500">Name</label>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full mt-1 p-3 border rounded-lg"
+      {/* Info Grid */}
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Info label="Primary Market" value={profile.primaryMarket} />
+        <Info label="Trading Style" value={profile.tradingStyle} />
+        <Info label="Account Currency" value={profile.accountCurrency} />
+        <Info label="Default Lot Type" value={profile.defaultLotType} />
+        <Info
+          label="Risk Per Trade"
+          value={profile.riskPerTrade ? `${profile.riskPerTrade}%` : undefined}
         />
+        <Info label="Timezone" value={profile.timezone} />
       </div>
 
-      {/* Email (read only) */}
-      <div className="mb-6">
-        <label className="text-sm text-gray-500">Email</label>
-        <input
-          value={user?.email}
-          disabled
-          className="w-full mt-1 p-3 border rounded-lg bg-gray-100"
-        />
-      </div>
+      {/* Bio */}
+      {profile.bio && (
+        <div className="mt-6">
+          <h3 className="font-semibold mb-1">Bio</h3>
+          <p className="text-gray-600 dark:text-gray-300">
+            {profile.bio}
+          </p>
+        </div>
+      )}
 
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        className="px-6 py-3 bg-green-600 text-white rounded-lg"
-      >
-        {loading ? "Saving..." : "Save Changes"}
-      </button>
+      {/* Actions */}
+      <div className="mt-8">
+        <Link
+          to="/profile/edit"
+          className="inline-block px-6 py-2 rounded-md border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800"
+        >
+          Edit Profile
+        </Link>
+      </div>
     </div>
   );
-}
+};
+
+type InfoProps = {
+  label: string;
+  value?: string;
+};
+
+const Info = ({ label, value }: InfoProps) => (
+  <div>
+    <p className="text-sm text-gray-400">{label}</p>
+    <p className="font-medium">
+      {value || <span className="text-gray-400">—</span>}
+    </p>
+  </div>
+);
+
+export default Profile;

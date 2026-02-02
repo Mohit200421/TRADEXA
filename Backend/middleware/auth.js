@@ -4,9 +4,6 @@ module.exports = (req, res, next) => {
   try {
     let token = null;
 
-    /* =========================
-       🔐 TOKEN FROM HEADER ONLY
-    ========================= */
     if (req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts[0] === "Bearer" && parts[1]) {
@@ -19,7 +16,13 @@ module.exports = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+
+    // ✅ FIX: normalize user object
+    req.user = {
+      id: decoded.userId || decoded.id,
+      email: decoded.email,
+      name: decoded.name,
+    };
 
     next();
   } catch (err) {

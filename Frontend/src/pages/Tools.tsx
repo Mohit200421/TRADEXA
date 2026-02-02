@@ -2,10 +2,14 @@ import {
   Wrench,
   Calculator,
   Brain,
-  Sun
+  Sun,
+  TrendingUp
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Tools() {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* ================= HEADER ================= */}
@@ -25,7 +29,7 @@ export default function Tools() {
 
         {/* Stats */}
         <div className="flex gap-4">
-          <StatBox value="1" label="AVAILABLE" />
+          <StatBox value="2" label="AVAILABLE" />
           <StatBox value="5" label="COMING SOON" />
         </div>
       </div>
@@ -34,13 +38,23 @@ export default function Tools() {
 
       {/* ================= TOOLS GRID ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* ================= ACTIVE TOOL ================= */}
+        {/* ================= POSITION SIZE ================= */}
         <ToolCard
           icon={<Calculator size={22} />}
           title="Position Size Calculator"
           description="Calculate optimal lot size based on your risk tolerance and stop-loss distance"
           badge="POPULAR"
           active
+          onClick={() => navigate("/tools/position-size-calculator")}
+        />
+
+        {/* ================= PROFIT CALCULATOR ================= */}
+        <ToolCard
+          icon={<TrendingUp size={22} />}
+          title="Profit Calculator"
+          description="Calculate profit or loss using entry price, exit price, and lot size"
+          active
+          onClick={() => navigate("/tools/profit-calculator")}
         />
 
         {/* ================= COMING SOON ================= */}
@@ -79,7 +93,8 @@ function ToolCard({
   description,
   badge,
   active,
-  comingSoon
+  comingSoon,
+  onClick
 }: {
   icon: React.ReactNode;
   title: string;
@@ -87,9 +102,15 @@ function ToolCard({
   badge?: string;
   active?: boolean;
   comingSoon?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <div className="card p-6 flex flex-col justify-between">
+    <div
+      onClick={active ? onClick : undefined}
+      className={`card p-6 flex flex-col justify-between transition
+        ${active ? "cursor-pointer hover:shadow-lg" : "cursor-default"}
+      `}
+    >
       <div>
         {/* Icon + Badge */}
         <div className="flex items-start justify-between mb-4">
@@ -115,7 +136,11 @@ function ToolCard({
           {title}
         </h3>
 
-        <p className={`text-sm mt-2 ${comingSoon ? "opacity-50" : "text-text-secondary"}`}>
+        <p
+          className={`text-sm mt-2 ${
+            comingSoon ? "opacity-50" : "text-text-secondary"
+          }`}
+        >
           {description}
         </p>
       </div>
@@ -123,9 +148,9 @@ function ToolCard({
       {/* Footer */}
       <div className="mt-6 pt-4 border-t border-border">
         {active ? (
-          <button className="flex items-center gap-2 text-sm font-medium text-primary">
+          <span className="flex items-center gap-2 text-sm font-medium text-primary">
             Open Tool →
-          </button>
+          </span>
         ) : (
           <span className="text-xs text-text-secondary flex items-center gap-2">
             ● In Development

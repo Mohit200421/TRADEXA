@@ -10,10 +10,13 @@ import {
   LogOut,
   Sun,
   Moon,
+  Clock,
   LucideIcon,
 } from "lucide-react";
 
 import { useAuth } from "../contexts/AuthContext";
+import { useProfile } from "../contexts/ProfileContext";
+import defaultAvatar from "../assets/default-avatar.svg";
 
 interface TopbarProps {
   collapsed: boolean;
@@ -33,35 +36,65 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile": "Profile",
 };
 
+/* =========================
+   TIME ZONES
+========================= */
+const TIME_ZONES = [
+  { label: "UTC +5:30 Kolkata ", value: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  { label: "UTC", value: "UTC" },
+  { label: "New York", value: "America/New_York" },
+  { label: "London", value: "Europe/London" },
+  { label: "Dubai", value: "Asia/Dubai" },
+  { label: "Mumbai (IST)", value: "Asia/Kolkata" },
+  { label: "Tokyo", value: "Asia/Tokyo" },
+  { label: "Sydney", value: "Australia/Sydney" },
+];
+
 export default function Topbar({ collapsed }: TopbarProps) {
   const { logout, user } = useAuth();
+  const { profile } = useProfile();
+
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ FIX
+  const location = useLocation();
 
   const [time, setTime] = useState<Date>(new Date());
-  const [open, setOpen] = useState<boolean>(false);
-  const [dark, setDark] = useState<boolean>(
+  const [timezone, setTimezone] = useState<string>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+
+  const [open, setOpen] = useState(false);
+  const [tzOpen, setTzOpen] = useState(false);
+
+  const [dark, setDark] = useState(
     document.documentElement.classList.contains("dark")
   );
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const tzRef = useRef<HTMLDivElement>(null);
 
   /* =========================
-     CURRENT PAGE TITLE
+     PAGE TITLE
   ========================= */
-  const pageTitle =
-    PAGE_TITLES[location.pathname] || "Dashboard";
+  const pageTitle = PAGE_TITLES[location.pathname] || "Dashboard";
 
   /* =========================
-     LIVE CLOCK
+     CLOCK (TIMEZONE AWARE)
   ========================= */
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
+  const formattedTime = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: timezone, // ✅ correct state variable
+  }).format(time);
+  
+
   /* =========================
-     CLOSE DROPDOWN ON OUTSIDE CLICK
+     CLOSE DROPDOWNS
   ========================= */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -70,6 +103,9 @@ export default function Topbar({ collapsed }: TopbarProps) {
         !dropdownRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+      }
+      if (tzRef.current && !tzRef.current.contains(e.target as Node)) {
+        setTzOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -83,11 +119,6 @@ export default function Topbar({ collapsed }: TopbarProps) {
     const root = document.documentElement;
     root.classList.toggle("dark");
     setDark(root.classList.contains("dark"));
-
-    localStorage.setItem(
-      "theme",
-      root.classList.contains("dark") ? "dark" : "light"
-    );
   };
 
   /* =========================
@@ -97,6 +128,12 @@ export default function Topbar({ collapsed }: TopbarProps) {
     await logout();
     navigate("/", { replace: true });
   };
+
+  const avatarUrl =
+    profile?.avatar?.url || user?.avatar || defaultAvatar;
+
+  const activeTimezoneLabel =
+    TIME_ZONES.find((t) => t.value === timezone)?.label || timezone;
 
   return (
     <header
@@ -128,9 +165,39 @@ export default function Topbar({ collapsed }: TopbarProps) {
           {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
 
-        {/* Clock */}
-        <div className="px-3 py-1.5 rounded-lg border border-border text-sm font-medium">
-          {time.toLocaleTimeString()}
+        {/* CLOCK + TIMEZONE */}
+        <div className="relative" ref={tzRef}>
+          <button
+            onClick={() => setTzOpen((p) => !p)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm font-medium hover:bg-border-light"
+          >
+            <Clock size={16} />
+            <span>{formattedTime}</span>
+            <span className="text-xs text-text-secondary">
+              ({activeTimezoneLabel})
+            </span>
+          </button>
+
+          {tzOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-surface border border-border rounded-xl shadow-lg p-1 text-sm">
+              {TIME_ZONES.map((tz) => (
+                <button
+                  key={tz.value}
+                  onClick={() => {
+                    setTimezone(tz.value);
+                    setTzOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-border-light ${
+                    timezone === tz.value
+                      ? "bg-border-light font-medium"
+                      : ""
+                  }`}
+                >
+                  {tz.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Notification */}
@@ -145,7 +212,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
             className="flex items-center gap-2 p-1.5 rounded-full hover:bg-border-light"
           >
             <img
-              src={user?.avatar || "/avatar.jpg"}
+              src={avatarUrl}
               alt="User avatar"
               className="w-8 h-8 rounded-full object-cover"
             />
@@ -156,8 +223,12 @@ export default function Topbar({ collapsed }: TopbarProps) {
             <div className="absolute right-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
               {/* USER */}
               <div className="p-4 border-b border-border">
-                <p className="font-medium">{user?.name}</p>
-                <p className="text-xs text-text-secondary">{user?.email}</p>
+                <p className="font-medium">
+                  {profile?.fullName || user?.name}
+                </p>
+                <p className="text-xs text-text-secondary">
+                  {user?.email}
+                </p>
               </div>
 
               {/* MENU */}

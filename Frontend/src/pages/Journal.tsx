@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  BookOpen,
-  RotateCcw,
-  BarChart3
-} from "lucide-react";
+import { BookOpen, CheckCircle, Clock } from "lucide-react";
+import toast from "react-hot-toast";
 import API from "../api/axios";
 
 /* =====================
@@ -29,180 +26,59 @@ interface Journal {
   lessons: string;
   tags: string;
   rating: number;
-  checklist: {
-    followedPlan: boolean;
-    properRisk: boolean;
-    goodEntry: boolean;
-    patientExit: boolean;
-  };
+  checklist: Record<string, boolean>;
 }
 
 /* =====================
-   MAIN PAGE
+   PAGE
 ===================== */
 
-export default function Journal() {
-  const [tab, setTab] = useState<"all" | "journaled" | "pending">("all");
+export default function JournalPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
 
   useEffect(() => {
-    API.get("/trades").then((res) => setTrades(res.data));
+    API.get("/trades")
+      .then((res) => setTrades(res.data))
+      .catch(() => toast.error("Failed to load trades"));
   }, []);
 
-  const journaled = useMemo(
-    () => trades.filter((t) => t.journal),
-    [trades]
-  );
-
-  const pending = useMemo(
-    () => trades.filter((t) => !t.journal),
-    [trades]
-  );
-
-  const visible = useMemo(() => {
-    if (tab === "journaled") return journaled;
-    if (tab === "pending") return pending;
-    return trades;
-  }, [tab, trades, journaled, pending]);
+  const journaled = useMemo(() => trades.filter((t) => t.journal), [trades]);
+  const pending = useMemo(() => trades.filter((t) => !t.journal), [trades]);
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-      {/* =====================
-          LEFT PANEL
-      ===================== */}
-      <div className="rounded-2xl border border-border bg-background p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Trade Journal</h2>
-          <span className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary">
-            {visible.length} entries
-          </span>
-        </div>
+    <div className="grid grid-cols-12 gap-6">
+      {/* SIDEBAR */}
+      <aside className="col-span-12 xl:col-span-4 bg-background border border-border rounded-2xl p-4 space-y-6">
+        <h2 className="text-lg font-semibold">Journal</h2>
 
-        {/* Tabs */}
-        <div className="flex bg-border-light rounded-xl p-1 mb-4">
-          <Tab label="All" count={trades.length} active={tab === "all"} onClick={() => setTab("all")} />
-          <Tab label="Journaled" count={journaled.length} active={tab === "journaled"} onClick={() => setTab("journaled")} />
-          <Tab label="Pending" count={pending.length} active={tab === "pending"} onClick={() => setTab("pending")} />
-        </div>
+        <div className="space-y-4">
+          <TradeSection
+            title="Pending"
+            icon={<Clock size={16} />}
+            trades={pending}
+            selected={selectedTrade}
+            onSelect={setSelectedTrade}
+          />
 
-        {/* Trades */}
-        <div className="space-y-3 max-h-[520px] overflow-y-auto">
-          {visible.length === 0 ? (
-            <p className="text-sm text-center text-text-secondary py-20">
-              No trades yet
-            </p>
-          ) : (
-            visible.map((trade) => (
-              <TradeCard
-                key={trade._id}
-                trade={trade}
-                active={selectedTrade?._id === trade._id}
-                onClick={() => setSelectedTrade(trade)}
-              />
-            ))
-          )}
+          <TradeSection
+            title="Journaled"
+            icon={<CheckCircle size={16} />}
+            trades={journaled}
+            selected={selectedTrade}
+            onSelect={setSelectedTrade}
+          />
         </div>
-      </div>
+      </aside>
 
-      {/* =====================
-          RIGHT PANEL
-      ===================== */}
-      <div className="xl:col-span-2 rounded-2xl border border-border bg-background">
+      {/* CONTENT */}
+      <main className="col-span-12 xl:col-span-8 bg-background border border-border rounded-2xl">
         {!selectedTrade ? (
           <EmptyState />
         ) : (
-          <JournalEditor trade={selectedTrade} />
+          <JournalEditor key={selectedTrade._id} trade={selectedTrade} />
         )}
-      </div>
-    </div>
-  );
-}
-
-/* =====================
-   LEFT TRADE CARD
-===================== */
-
-function TradeCard({
-  trade,
-  active,
-  onClick
-}: {
-  trade: Trade;
-  active: boolean;
-  onClick: () => void;
-}) {
-  const profit = trade.pnl >= 0;
-
-  return (
-    <div
-      onClick={onClick}
-      className={`cursor-pointer rounded-2xl p-4 border transition-all
-        ${
-          active
-            ? "border-primary bg-primary/10 shadow-sm"
-            : "border-border hover:bg-border-light"
-        }`}
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <h4 className="font-semibold text-base">{trade.symbol}</h4>
-          <span
-            className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full
-              ${
-                trade.type === "LONG"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-red-500/10 text-red-500"
-              }`}
-          >
-            {trade.type}
-          </span>
-        </div>
-
-        <div className="text-right">
-          <div
-            className={`font-semibold ${
-              profit ? "text-primary" : "text-red-500"
-            }`}
-          >
-            {profit ? "+" : ""}
-            {trade.pnl}
-          </div>
-
-          {!trade.journal && (
-            <span className="mt-1 inline-block text-xs px-2 py-0.5 rounded-full bg-border-light text-text-secondary">
-              NEW
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="text-xs text-text-secondary mt-2">
-        {new Date(trade.entryDate).toLocaleString()}
-      </div>
-    </div>
-  );
-}
-
-/* =====================
-   EMPTY STATE
-===================== */
-
-function EmptyState() {
-  return (
-    <div className="h-full flex items-center justify-center p-10">
-      <div className="text-center max-w-md space-y-4">
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <BookOpen size={28} className="text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold">
-          Select a trade to journal
-        </h3>
-        <p className="text-sm text-text-secondary">
-          Click on any trade from the list to view and edit your detailed notes,
-          screenshots, and trading insights.
-        </p>
-      </div>
+      </main>
     </div>
   );
 }
@@ -212,112 +88,205 @@ function EmptyState() {
 ===================== */
 
 function JournalEditor({ trade }: { trade: Trade }) {
-  const [form, setForm] = useState<Journal>({
-    preTrade: trade.journal?.preTrade || "",
-    postTrade: trade.journal?.postTrade || "",
-    emotions: trade.journal?.emotions || "",
-    lessons: trade.journal?.lessons || "",
-    tags: trade.journal?.tags || "",
-    rating: trade.journal?.rating || 5,
-    checklist: trade.journal?.checklist || {
-      followedPlan: false,
-      properRisk: false,
-      goodEntry: false,
-      patientExit: false
+  const defaultChecklist = {
+    "Followed plan": false,
+    "Proper risk": false,
+    "Good entry": false,
+    "Patient exit": false,
+  };
+
+  const emptyJournal: Journal = {
+    preTrade: "",
+    postTrade: "",
+    emotions: "",
+    lessons: "",
+    tags: "",
+    rating: 5,
+    checklist: defaultChecklist,
+  };
+
+  const [form, setForm] = useState<Journal>(emptyJournal);
+  const [adding, setAdding] = useState(false);
+  const [newPoint, setNewPoint] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setForm(trade.journal ? trade.journal : emptyJournal);
+    setAdding(false);
+    setNewPoint("");
+  }, [trade._id]);
+
+  const addCheckpoint = () => {
+    const key = newPoint.trim();
+    if (!key) return;
+
+    if (form.checklist[key]) {
+      toast.error("Checkpoint already exists");
+      return;
     }
-  });
+
+    setForm({
+      ...form,
+      checklist: { ...form.checklist, [key]: false },
+    });
+
+    setNewPoint("");
+    setAdding(false);
+  };
+
+  const saveJournal = async () => {
+    const id = toast.loading("Saving journal...");
+    try {
+      await API.put(`/trades/${trade._id}/journal`, {
+        ...form,
+      });
+      toast.success("Journal saved", { id });
+    } catch {
+      toast.error("Save failed", { id });
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-background pb-4 border-b border-border">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              {trade.symbol}
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
-                  trade.pnl >= 0
-                    ? "bg-primary/10 text-primary"
-                    : "bg-red-500/10 text-red-500"
-                }`}
-              >
-                {trade.pnl >= 0 ? "WINNER" : "LOSER"}
-              </span>
-            </h2>
-            <p className="text-sm text-text-secondary mt-1">
-              {trade.type} • Entry ${trade.entryPrice} • Size {trade.lotSize} •{" "}
-              {new Date(trade.entryDate).toLocaleString()}
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            <button className="btn-secondary">
-              <RotateCcw size={16} />
-            </button>
-            <button className="btn-secondary flex gap-2">
-              <BarChart3 size={16} />
-              Analytics
-            </button>
-            <button className="btn-primary">Save</button>
-          </div>
+    <div className="p-8 space-y-8">
+      {/* HEADER */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-bold">{trade.symbol}</h1>
+          <p className="text-sm text-text-secondary">
+            {trade.type} • Entry {trade.entryPrice} • Lot {trade.lotSize}
+          </p>
         </div>
+
+        <button
+          onClick={saveJournal}
+          disabled={saving}
+          className="btn-primary"
+        >
+          Save Journal
+        </button>
       </div>
 
-      {/* Sections */}
-      <Section title="Pre-Trade Analysis">
-        <Textarea placeholder="What did you see? Plan, thesis, levels, risk..." />
-      </Section>
-
-      <Section title="Post-Trade Review">
-        <Textarea placeholder="What happened? Execution, slippage, improvements..." />
-      </Section>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Section title="Emotions">
-          <Textarea placeholder="Calm, anxious, FOMO, confident..." />
-        </Section>
-        <Section title="Lessons Learned">
-          <Textarea placeholder="Key takeaways to repeat or avoid..." />
-        </Section>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Section title="Tags">
-          <input className="input" placeholder="breakout, trend, news" />
-        </Section>
-
-        <Section title="Rating">
-          <input type="range" min={1} max={10} value={form.rating} className="w-full" />
-          <div className="text-right text-sm text-text-secondary">
-            {form.rating}/10
-          </div>
-        </Section>
-      </div>
-
-      <Section title="Execution Checklist">
+      {/* CHECKLIST */}
+      <Card title="Checklist">
         <div className="flex flex-wrap gap-3">
           {Object.entries(form.checklist).map(([key, value]) => (
             <button
               key={key}
-              className={`px-4 py-2 rounded-full text-sm border transition
+              onClick={() =>
+                setForm({
+                  ...form,
+                  checklist: {
+                    ...form.checklist,
+                    [key]: !value,
+                  },
+                })
+              }
+              className={`px-4 py-2 rounded-full border text-sm transition
                 ${
                   value
                     ? "bg-primary/10 text-primary border-primary"
                     : "border-border text-text-secondary"
                 }`}
             >
-              {key.replace(/([A-Z])/g, " $1")}
+              {key}
             </button>
           ))}
-        </div>
-      </Section>
 
-      <Section title="Screenshots">
-        <div className="border-2 border-dashed rounded-2xl p-10 text-center text-text-secondary hover:border-primary transition cursor-pointer">
-          Drop chart screenshots here or click to upload
+          {!adding && (
+            <button
+              onClick={() => setAdding(true)}
+              className="px-4 py-2 rounded-full border border-dashed text-sm text-text-secondary hover:text-primary"
+            >
+              + Add checkpoint
+            </button>
+          )}
         </div>
-      </Section>
+
+        {adding && (
+          <div className="mt-4 flex gap-2">
+            <input
+              autoFocus
+              value={newPoint}
+              onChange={(e) => setNewPoint(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addCheckpoint()}
+              placeholder="Custom checkpoint"
+              className="input flex-1"
+            />
+            <button className="btn-primary" onClick={addCheckpoint}>
+              Add
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => setAdding(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </Card>
+
+      {/* NOTES */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card title="Pre-Trade Plan">
+          <Textarea
+            value={form.preTrade}
+            onChange={(v) => setForm({ ...form, preTrade: v })}
+          />
+        </Card>
+
+        <Card title="Post-Trade Review">
+          <Textarea
+            value={form.postTrade}
+            onChange={(v) => setForm({ ...form, postTrade: v })}
+          />
+        </Card>
+
+        <Card title="Emotions">
+          <Textarea
+            value={form.emotions}
+            onChange={(v) => setForm({ ...form, emotions: v })}
+          />
+        </Card>
+
+        <Card title="Lessons Learned">
+          <Textarea
+            value={form.lessons}
+            onChange={(v) => setForm({ ...form, lessons: v })}
+          />
+        </Card>
+      </div>
+
+      {/* META */}
+      <Card title="Meta">
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <label className="text-xs text-text-secondary">Tags</label>
+            <input
+              className="input mt-1"
+              value={form.tags}
+              onChange={(e) =>
+                setForm({ ...form, tags: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-text-secondary">
+              Rating
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={form.rating}
+              onChange={(e) =>
+                setForm({ ...form, rating: Number(e.target.value) })
+              }
+            />
+            <p className="text-right text-sm">{form.rating}/10</p>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -326,46 +295,85 @@ function JournalEditor({ trade }: { trade: Trade }) {
    UI HELPERS
 ===================== */
 
-function Section({ title, children }: any) {
+function TradeSection({
+  title,
+  icon,
+  trades,
+  selected,
+  onSelect,
+}: any) {
+  if (trades.length === 0) return null;
+
   return (
-    <div className="rounded-2xl border border-border p-5 space-y-3 bg-background">
-      <h4 className="text-sm font-semibold text-text-secondary uppercase">
+    <div>
+      <h4 className="text-xs uppercase text-text-secondary mb-2 flex items-center gap-2">
+        {icon}
         {title}
       </h4>
+
+      <div className="space-y-2">
+        {trades.map((t: Trade) => (
+          <button
+            key={t._id}
+            onClick={() => onSelect({ ...t })}
+            className={`w-full text-left p-3 rounded-xl border transition
+              ${
+                selected?._id === t._id
+                  ? "border-primary bg-primary/10"
+                  : "border-border hover:bg-border-light"
+              }`}
+          >
+            <div className="flex justify-between">
+              <span className="font-medium">{t.symbol}</span>
+              <span
+                className={`text-sm ${
+                  t.pnl >= 0 ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {t.pnl}
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary">
+              {new Date(t.entryDate).toLocaleDateString()}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Card({ title, children }: any) {
+  return (
+    <div className="border border-border rounded-2xl p-5 space-y-3">
+      <h3 className="text-sm font-semibold uppercase text-text-secondary">
+        {title}
+      </h3>
       {children}
     </div>
   );
 }
 
-function Textarea({ placeholder }: any) {
+function Textarea({ value, onChange }: any) {
   return (
     <textarea
       rows={4}
-      placeholder={placeholder}
-      className="w-full rounded-xl border border-border p-4 resize-none bg-background focus:outline-primary"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full border border-border rounded-xl p-3 resize-none"
     />
   );
 }
 
-function Tab({
-  label,
-  count,
-  active,
-  onClick
-}: any) {
+function EmptyState() {
   return (
-    <button
-      onClick={onClick}
-      className={`flex-1 py-2 rounded-lg text-sm ${
-        active
-          ? "bg-background shadow text-primary"
-          : "text-text-secondary"
-      }`}
-    >
-      {label}{" "}
-      <span className="ml-1 text-xs text-text-secondary">
-        {count}
-      </span>
-    </button>
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <BookOpen size={40} className="mx-auto text-text-secondary" />
+        <p className="text-text-secondary">
+          Select a trade to start journaling
+        </p>
+      </div>
+    </div>
   );
 }

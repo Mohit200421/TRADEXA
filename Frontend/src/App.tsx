@@ -11,20 +11,28 @@ import VerifyEmailOTP from "./pages/VerifyEmailOTP";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import HomePage from "./pages/HomePage";
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
 
 import Dashboard from "./pages/Dashboard";
 import Trades from "./pages/Trades";
+import AddTradePage from "./pages/AddTradePage";
+import TradeDetails from "./pages/TradeDetails";
 import Reviews from "./pages/Reviews";
 import ReplayBacktest from "./pages/ReplayBacktest";
 import Replay from "./pages/Replay";
 import TradingViewPro from "./pages/TradingViewPro";
-import Journal from "./pages/Journal";
+
 import Performance from "./pages/Performance";
 import Market from "./pages/Market";
 import Learn from "./pages/Learn";
 import Community from "./pages/Community";
+import CommunityList from "./pages/CommunityList";
+import CommunityPage from "./pages/CommunityPage";
 import Tools from "./pages/Tools";
-import Profile from "./pages/Profile";
+import PositionSizeCalculator from "./tools/PositionSizeCalculator";
+import ProfitCalculator from "./tools/ProfitCalculator";
+
 
 import DashboardLayout from "./layouts/DashboardLayout";
 
@@ -54,17 +62,29 @@ export default function App() {
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trades" element={<Trades />} />
+              <Route path="/trades/add" element={<AddTradePage />} />
+              <Route path="/trades/:tradeId" element={<TradeDetails />} />
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/replay" element={<Replay />} />
               <Route path="/replay-backtest" element={<ReplayBacktest />} />
               <Route path="/trading-chart" element={<TradingViewPro />} />
-              <Route path="/journal" element={<Journal />} />
               <Route path="/performance" element={<Performance />} />
               <Route path="/market" element={<Market />} />
               <Route path="/learn" element={<Learn />} />
               <Route path="/community" element={<Community />} />
-              <Route path="/tools" element={<Tools />} />
+              <Route path="/community" element={<CommunityList />} />
+              <Route path="/community/:communityId" element={<CommunityPage />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/edit" element={<EditProfile />} />
+              <Route path="/tools" element={<Tools />} />
+              <Route
+  path="/tools/position-size-calculator"
+  element={<PositionSizeCalculator />}
+/>
+<Route path="/tools/profit-calculator" element={<ProfitCalculator />} />
+
+
+              
             </Route>
 
             {/* ================= FALLBACK ================= */}

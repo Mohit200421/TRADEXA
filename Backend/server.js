@@ -2,33 +2,133 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const authRoutes = require("./routes/authRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
-const userRoutes = require("./routes/userRoutes");
+const profileRoutes = require("./routes/profileRoutes");
+const profileAvatarRoutes = require("./routes/profileAvatarRoutes");
+const communityRoutes = require("./routes/communityRoutes");
 
+const CommunityMessage = require("./models/CommunityMessage");
 const connectDB = require("./config/db");
 
 const app = express();
 
 /* =========================
-   CORS (LOCAL + DEPLOY SAFE)
+   HTTP SERVER
 ========================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://trade-fx-flax.vercel.app",
-];
+const server = http.createServer(app);
 
+/* =========================
+   SOCKET.IO
+========================= */
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "https://trade-fx-flax.vercel.app",
+    ],
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", socket => {
+  console.log("🟢 Socket connected:", socket.id);
+
+  /* =========================
+     JOIN CHANNEL (ROOM)
+  ========================= */
+  socket.on("join-channel", channelId => {
+    socket.join(channelId);
+    console.log(`📥 ${socket.id} joined channel: ${channelId}`);
+  });
+
+  /* =========================
+     SEND MESSAGE
+  ========================= */
+  socket.on("send-message", async data => {
+    try {
+      const message = await CommunityMessage.create({
+        channel: data.channel,
+        parentId: data.parentId || null,
+
+        type: data.type,
+        user: data.user,
+        avatar: data.avatar,
+        time: data.time,
+
+        text: data.text,
+
+        symbol: data.symbol,
+        side: data.side,
+        entry: data.entry,
+        sl: data.sl,
+        tp: data.tp,
+
+        imageUrl: data.imageUrl,
+        fileUrl: data.fileUrl,
+        fileName: data.fileName,
+      });
+
+      // 🔥 Emit SAVED message (this fixes send issue)
+      io.to(message.channel).emit("new-message", message);
+    } catch (err) {
+      console.error("❌ Failed to save community message:", err);
+    }
+  });
+
+  /* =========================
+     TOGGLE REACTION
+  ========================= */
+  socket.on("toggle-reaction", async ({ messageId, emoji, user }) => {
+    try {
+      const message = await CommunityMessage.findById(messageId);
+      if (!message) return;
+
+      const users = message.reactions.get(emoji) || [];
+
+      if (users.includes(user)) {
+        message.reactions.set(
+          emoji,
+          users.filter(u => u !== user)
+        );
+      } else {
+        message.reactions.set(emoji, [...users, user]);
+      }
+
+      await message.save();
+
+      io.to(message.channel).emit("reaction-updated", {
+        messageId,
+        reactions: Object.fromEntries(message.reactions),
+      });
+    } catch (err) {
+      console.error("❌ Reaction update failed:", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected:", socket.id);
+  });
+});
+
+/* =========================
+   CORS (REST API)
+========================= */
 app.use(
   cors({
-    origin: true, // 🔥 allow all origins safely
-    credentials: false, // 🔥 we are NOT using cookies
+    origin: [
+      "http://localhost:5173",
+      "https://trade-fx-flax.vercel.app",
+    ],
+    credentials: false,
   })
 );
-
 
 /* =========================
    MIDDLEWARES
@@ -44,7 +144,9 @@ app.use("/api/trades", tradeRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/profile", profileAvatarRoutes);
+app.use("/api/community", communityRoutes);
 
 /* =========================
    HEALTH CHECK
@@ -59,6 +161,6 @@ app.get("/", (req, res) => {
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`🚀 Server + Socket.IO running on port ${PORT}`);
 });

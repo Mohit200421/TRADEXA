@@ -56,6 +56,7 @@ export default function Register() {
   
       await API.post("/auth/register", registerData);
 
+
   
       toast.success(
         "Account created! 📧 OTP sent to your email."
@@ -136,7 +137,7 @@ export default function Register() {
                 <TrendingUp className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">TradeFX Pro</h1>
+                <h1 className="text-2xl font-bold text-white">TRADEXA</h1>
                 <p className="text-emerald-100 text-sm">Professional Trading Journal</p>
               </div>
             </Link>
@@ -182,7 +183,7 @@ export default function Register() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">TradeFX Pro</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">TRADEXA</h1>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">Professional Trading Journal</p>
               </div>
             </Link>

@@ -111,7 +111,7 @@ export default function Login() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  TradeFX Pro
+                  TRADEXA
                 </h1>
                 <p className="text-blue-100 text-sm">
                   Professional Trading Journal
@@ -176,7 +176,7 @@ export default function Login() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  TradeFX Pro
+                  TRADEXA
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Professional Trading Journal

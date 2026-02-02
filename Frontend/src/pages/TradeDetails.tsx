@@ -1,77 +1,212 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import API from "../api/axios";
+import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import toast from "react-hot-toast";
-import { getTradeById, deleteTrade } from "../services/tradeService";
 
 export default function TradeDetails() {
-  const { id } = useParams();
+  const { tradeId } = useParams();
   const navigate = useNavigate();
   const [trade, setTrade] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchTrade = async () => {
-    try {
-      const res = await getTradeById(id as string);
-      setTrade(res.data);
-    } catch {
-      toast.error("Trade not found ❌");
-      navigate("/trades");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchTrade = async () => {
+      try {
+        const res = await API.get("/trades");
+        const found = res.data.find((t: any) => t._id === tradeId);
+
+        if (!found) {
+          toast.error("Trade not found");
+          navigate("/trades");
+          return;
+        }
+
+        setTrade(found);
+      } catch {
+        toast.error("Failed to load trade");
+      }
+    };
+
     fetchTrade();
-  }, []);
+  }, [tradeId, navigate]);
 
-  const handleDelete = async () => {
-    if (!trade?._id) return;
-    await deleteTrade(trade._id);
-    toast.success("Trade Deleted ✅");
-    navigate("/trades");
-  };
+  if (!trade) return null;
 
-  if (loading) return <p className="p-6">Loading...</p>;
+  const j = trade.journal || {};
+  const screenshots: string[] = j.screenshots || [];
+  const isProfit = trade.pnl >= 0;
 
   return (
-    <div className="p-6">
+    <div className="max-w-7xl mx-auto space-y-6 px-2 sm:px-4">
+      {/* BACK */}
       <button
         onClick={() => navigate("/trades")}
-        className="mb-4 px-4 py-2 bg-gray-200 rounded"
+        className="flex items-center gap-2 text-sm text-text-secondary hover:text-text"
       >
-        ← Back
+        <ArrowLeft size={16} />
+        Back to Trades
       </button>
 
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h1 className="text-2xl font-bold mb-3">
-          {trade.symbol} ({trade.side})
-        </h1>
+      {/* HEADER */}
+      <div className="card p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {trade.symbol}
+          </h1>
 
-        <p><b>Entry:</b> {trade.entry}</p>
-        <p><b>Stop Loss:</b> {trade.stopLoss}</p>
-        <p><b>Take Profit:</b> {trade.takeProfit}</p>
-        <p><b>Quantity:</b> {trade.quantity}</p>
-        <p><b>Notes:</b> {trade.notes || "-"}</p>
-
-        {trade.screenshotUrl && (
-          <div className="mt-4">
-            <h2 className="font-semibold mb-2">Screenshot</h2>
-            <img
-              src={trade.screenshotUrl}
-              alt="Trade Screenshot"
-              className="w-full max-w-xl rounded border"
-            />
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium
+              ${
+                isProfit
+                  ? "bg-blue-500/10 text-blue-600"
+                  : "bg-red-500/10 text-red-500"
+              }`}
+          >
+            {isProfit ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            {isProfit ? "PROFIT" : "LOSS"}
           </div>
-        )}
+        </div>
 
-        <button
-          onClick={handleDelete}
-          className="mt-6 bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Delete Trade
-        </button>
+        {/* STATS */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <Stat label="Type" value={trade.type} />
+          <Stat label="Entry" value={trade.entryPrice} />
+          <Stat label="Exit" value={trade.exitPrice ?? "-"} />
+          <Stat label="Lot Size" value={trade.lotSize} />
+          <Stat
+            label="P&L"
+            value={trade.pnl}
+            highlight
+            positive={isProfit}
+          />
+          <Stat label="Rating" value={j.rating ? `${j.rating}/10` : "-"} />
+        </div>
+
+        {/* JOURNAL */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <JournalCard title="Pre-Trade Plan">{j.preTrade}</JournalCard>
+          <JournalCard title="Post-Trade Review">{j.postTrade}</JournalCard>
+          <JournalCard title="Emotions">{j.emotions}</JournalCard>
+          <JournalCard title="Lessons Learned">{j.lessons}</JournalCard>
+        </div>
+
+        {/* TAGS */}
+        <Section title="Tags">
+          {j.tags ? (
+            <div className="flex flex-wrap gap-2">
+              {j.tags.split(",").map((t: string, i: number) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 rounded-full text-xs bg-border-light"
+                >
+                  {t.trim()}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <Muted>—</Muted>
+          )}
+        </Section>
+
+        {/* CHECKLIST */}
+        <Section title="Checklist">
+          <div className="flex flex-wrap gap-2">
+            {j.checklist &&
+              Object.entries(j.checklist)
+                .filter(([, v]) => v)
+                .map(([k]) => (
+                  <span
+                    key={k}
+                    className="px-3 py-1 rounded-full text-xs bg-blue-500/10 text-blue-600"
+                  >
+                    {k}
+                  </span>
+                ))}
+
+            {!j.checklist && <Muted>—</Muted>}
+          </div>
+        </Section>
+
+        {/* SCREENSHOTS */}
+        <Section title="Screenshots">
+          {screenshots.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {screenshots.map((url, i) => (
+                <img
+                  key={i}
+                  src={url}
+                  alt={`Trade screenshot ${i + 1}`}
+                  loading="lazy"
+                  className="rounded-xl border border-border object-cover w-full h-40 hover:scale-[1.02] transition"
+                />
+              ))}
+            </div>
+          ) : (
+            <Muted>No screenshots uploaded</Muted>
+          )}
+        </Section>
       </div>
     </div>
   );
+}
+
+/* =====================
+   UI COMPONENTS
+===================== */
+
+function Stat({
+  label,
+  value,
+  highlight,
+  positive,
+}: {
+  label: string;
+  value: any;
+  highlight?: boolean;
+  positive?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border p-4 text-sm">
+      <p className="text-xs text-text-secondary mb-1">{label}</p>
+      <p
+        className={`font-semibold ${
+          highlight
+            ? positive
+              ? "text-blue-600"
+              : "text-red-500"
+            : ""
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function JournalCard({ title, children }: any) {
+  return (
+    <div className="rounded-xl border border-border p-5">
+      <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">
+        {title}
+      </h4>
+      <p className="text-sm leading-relaxed">
+        {children || "—"}
+      </p>
+    </div>
+  );
+}
+
+function Section({ title, children }: any) {
+  return (
+    <div>
+      <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function Muted({ children }: any) {
+  return <p className="text-sm text-text-secondary">{children}</p>;
 }

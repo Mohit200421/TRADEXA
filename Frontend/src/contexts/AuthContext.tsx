@@ -1,23 +1,48 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import API from "../api/axios";
 
-const AuthContext = createContext<any>(null);
+type AuthContextType = {
+  user: any | null;
+  setUser: (user: any | null) => void;
+  loading: boolean;
+  logout: () => void;
+};
 
-export function AuthProvider({ children }: { children: any }) {
-  const [user, setUser] = useState<any>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUserState] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔒 This prevents re-running restore on back/forward
   const restoredRef = useRef(false);
 
+  /* =========================
+     RESTORE AUTH STATE
+  ========================= */
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
 
     const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    // ✅ Restore user safely
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUserState(parsed);
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
 
     if (!token) {
-      setUser(null);
       setLoading(false);
       return;
     }
@@ -25,9 +50,9 @@ export function AuthProvider({ children }: { children: any }) {
     const restore = async () => {
       try {
         const res = await API.get("/auth/me");
-        setUser(res.data);
+        updateUser(res.data);
       } catch {
-        // ❗ DO NOTHING — do not logout on restore failure
+        // do NOT crash or logout
       } finally {
         setLoading(false);
       }
@@ -36,16 +61,50 @@ export function AuthProvider({ children }: { children: any }) {
     restore();
   }, []);
 
+  /* =========================
+     SAFE USER UPDATE
+  ========================= */
+  const updateUser = (userData: any | null) => {
+    if (!userData) {
+      setUserState(null);
+      localStorage.removeItem("user");
+      return;
+    }
+
+    setUserState(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  /* =========================
+     LOGOUT
+  ========================= */
   const logout = () => {
     localStorage.removeItem("token");
-    setUser(null);
+    localStorage.removeItem("user");
+    setUserState(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser: updateUser,
+        loading,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+/* =========================
+   SAFE HOOK
+========================= */
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+  return ctx;
+};
