@@ -25,26 +25,31 @@ const app = express();
 app.set("trust proxy", 1);
 
 /* =========================
-   HTTP SERVER
-========================= */
-const server = http.createServer(app);
-
-/* =========================
-   CORS CONFIG (FIXED)
+   ALLOWED ORIGINS
 ========================= */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://tradexa-lilac.vercel.app",
 ];
 
+/* =========================
+   CORS (REST API)
+========================= */
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
+      // allow server-to-server & mobile apps
+      if (!origin) return callback(null, true);
+
+      // allow localhost + ALL vercel preview deployments
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
       }
+
+      callback(new Error("CORS not allowed"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
@@ -59,23 +64,37 @@ app.use(express.json());
 app.use(cookieParser());
 
 /* =========================
-   SOCKET.IO (FIXED)
+   HTTP SERVER
+========================= */
+const server = http.createServer(app);
+
+/* =========================
+   SOCKET.IO
 ========================= */
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin === "http://localhost:5173" ||
+        origin.endsWith(".vercel.app")
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error("Socket CORS blocked"));
+    },
     credentials: true,
   },
 });
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
-  socket.on("join-channel", channelId => {
+  socket.on("join-channel", (channelId) => {
     socket.join(channelId);
   });
 
-  socket.on("send-message", async data => {
+  socket.on("send-message", async (data) => {
     try {
       const message = await CommunityMessage.create(data);
       io.to(message.channel).emit("new-message", message);
@@ -94,7 +113,7 @@ io.on("connection", socket => {
       message.reactions.set(
         emoji,
         users.includes(user)
-          ? users.filter(u => u !== user)
+          ? users.filter((u) => u !== user)
           : [...users, user]
       );
 
@@ -134,7 +153,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   START SERVER
+   DATABASE + SERVER
 ========================= */
 connectDB();
 
