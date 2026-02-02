@@ -40,7 +40,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow server-to-server & curl/postman
+      // Allow server-to-server, curl, Postman
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -50,10 +50,13 @@ app.use(
       return callback(new Error("CORS not allowed"), false);
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// 🔥 REQUIRED: allow ALL preflight requests
+app.options("*", cors());
 
 /* =========================
    MIDDLEWARES
@@ -99,6 +102,7 @@ io.on("connection", socket => {
       if (!message) return;
 
       const users = message.reactions.get(emoji) || [];
+
       message.reactions.set(
         emoji,
         users.includes(user)
