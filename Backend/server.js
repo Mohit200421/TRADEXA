@@ -20,7 +20,7 @@ const connectDB = require("./config/db");
 const app = express();
 
 /* =========================
-   TRUST PROXY
+   TRUST PROXY (RENDER)
 ========================= */
 app.set("trust proxy", 1);
 
@@ -29,13 +29,17 @@ app.set("trust proxy", 1);
 ========================= */
 app.use(express.json());
 
+/* =========================
+   ✅ CORS (FIXED FOR VERCEL)
+========================= */
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://tradexa-lilac.vercel.app",
+      "https://tradexa-djz3cn5qc-mohit200421s-projects.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -60,7 +64,7 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   HTTP + SOCKET SERVER
+   HTTP + SOCKET.IO
 ========================= */
 const server = http.createServer(app);
 
@@ -69,6 +73,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "https://tradexa-lilac.vercel.app",
+      "https://tradexa-djz3cn5qc-mohit200421s-projects.vercel.app",
     ],
     methods: ["GET", "POST"],
   },
