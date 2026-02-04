@@ -61,26 +61,31 @@ const verifyEmailOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await User.findOne({
-      email,
-      emailOTP: otp,
-      emailOTPExpires: { $gt: Date.now() },
-    });
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP required" });
+    }
 
-    if (!user) {
+    const user = await User.findOne({ email });
+
+    if (
+      !user ||
+      user.emailOTP !== otp ||
+      user.emailOTPExpires < Date.now()
+    ) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
     user.isEmailVerified = true;
-    user.emailOTP = undefined;
-    user.emailOTPExpires = undefined;
+    user.emailOTP = null;
+    user.emailOTPExpires = null;
     await user.save();
 
     res.json({ message: "Email verified successfully" });
-  } catch {
+  } catch (err) {
     res.status(500).json({ message: "OTP verification failed" });
   }
 };
+
 
 /* =========================
    LOGIN
