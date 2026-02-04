@@ -58,7 +58,7 @@ export default function Login() {
          3️⃣ UPDATE AUTH CONTEXT
       ========================= */
       setUser(meRes.data);
-
+      
       toast.success("Login Successful!");
       navigate("/dashboard");
     } catch (err: any) {

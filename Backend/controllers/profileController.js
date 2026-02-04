@@ -11,17 +11,12 @@ exports.getMyProfile = async (req, res) => {
     });
 
     if (!profile) {
-      return res.status(404).json({
-        message: "Profile not found",
-      });
+      return res.status(200).json(null); // ✅ do not throw 404
     }
 
     res.json(profile);
   } catch (error) {
-    console.error("Get profile error:", error);
-    res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -48,18 +43,13 @@ exports.createProfile = async (req, res) => {
 
     res.status(201).json(profile);
   } catch (error) {
-    console.error("Create profile error:", error);
-
-    // Handle duplicate username
     if (error.code === 11000) {
       return res.status(400).json({
         message: "Username already taken",
       });
     }
 
-    res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -83,16 +73,12 @@ exports.updateProfile = async (req, res) => {
 
     res.json(profile);
   } catch (error) {
-    console.error("Update profile error:", error);
-
     if (error.code === 11000) {
       return res.status(400).json({
         message: "Username already taken",
       });
     }
 
-    res.status(500).json({
-      message: "Server error",
-    });
+    res.status(500).json({ message: "Server error" });
   }
 };

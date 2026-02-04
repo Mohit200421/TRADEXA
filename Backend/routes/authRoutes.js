@@ -11,10 +11,6 @@ const {
   getMe,
 } = require("../controllers/authController");
 
-/* =========================
-   AUTH ROUTES
-========================= */
-
 // Register + OTP verification
 router.post("/register", register);
 router.post("/verify-email-otp", verifyEmailOTP);
@@ -24,10 +20,8 @@ router.post("/resend-email-otp", resendEmailOTP);
 router.post("/login", login);
 router.post("/logout", auth, logout);
 
-// Authenticated user
+// ✅ KEEP this (used by frontend)
 router.get("/me", auth, getMe);
-
-
 
 // Health test
 router.get("/test", (req, res) => {
