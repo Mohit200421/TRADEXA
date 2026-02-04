@@ -24,7 +24,8 @@ const register = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await User.create({
+    // ✅ CREATE USER FIRST (FAST)
+    const user = await User.create({
       name,
       email,
       password: hashedPassword,
@@ -33,17 +34,25 @@ const register = async (req, res) => {
       emailOTPExpires: Date.now() + 10 * 60 * 1000,
     });
 
-    await sendEmail({
+    // ✅ RESPOND IMMEDIATELY
+    res.status(201).json({
+      message: "Registered successfully. OTP sent to email.",
+    });
+
+    // ✅ SEND EMAIL IN BACKGROUND (NON-BLOCKING)
+    sendEmail({
       to: email,
       subject: "Verify your TradeFX account",
       html: emailOTPTemplate(otp),
+    }).catch((err) => {
+      console.error("Email send failed:", err.message);
     });
 
-    res.json({ message: "Registered successfully. OTP sent to email." });
   } catch (err) {
     res.status(500).json({ message: "Registration failed" });
   }
 };
+
 
 /* =========================
    VERIFY EMAIL OTP
