@@ -20,29 +20,29 @@ const connectDB = require("./config/db");
 const app = express();
 
 /* =========================
-   TRUST PROXY (RENDER)
+   TRUST PROXY
 ========================= */
 app.set("trust proxy", 1);
 
 /* =========================
-   MIDDLEWARES
+   BODY PARSER
 ========================= */
 app.use(express.json());
 
 /* =========================
-   ✅ CORS (FIXED FOR VERCEL)
+   🔥 CORS – ALLOW ALL (PRODUCTION SAFE)
 ========================= */
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://tradexa-lilac.vercel.app",
-      "https://tradexa-djz3cn5qc-mohit200421s-projects.vercel.app",
-    ],
+    origin: true,
+    credentials: false,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// 🔥 FORCE PREFLIGHT SUCCESS
+app.options("*", cors());
 
 /* =========================
    ROUTES
@@ -57,24 +57,20 @@ app.use("/api/profile", profileAvatarRoutes);
 app.use("/api/community", communityRoutes);
 
 /* =========================
-   HEALTH CHECK
+   HEALTH
 ========================= */
 app.get("/", (req, res) => {
   res.send("Trading Journal Backend Running ✅");
 });
 
 /* =========================
-   HTTP + SOCKET.IO
+   SERVER + SOCKET
 ========================= */
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://tradexa-lilac.vercel.app",
-      "https://tradexa-djz3cn5qc-mohit200421s-projects.vercel.app",
-    ],
+    origin: true,
     methods: ["GET", "POST"],
   },
 });
@@ -88,12 +84,10 @@ io.on("connection", (socket) => {
     const message = await CommunityMessage.create(data);
     io.to(message.channel).emit("new-message", message);
   });
-
-  socket.on("disconnect", () => {});
 });
 
 /* =========================
-   DB + START
+   START
 ========================= */
 connectDB();
 
