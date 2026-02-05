@@ -44,7 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         });
 
-        updateUser(res.data);
+        // ✅ Handle null profile (user exists but no profile created yet)
+        if (res.data === null) {
+          // User is authenticated but hasn't created a profile yet
+          // Keep the token but don't set user data
+          setUserState(null);
+        } else {
+          updateUser(res.data);
+        }
       } catch (err: any) {
         console.error("Auth restore failed:", err?.response?.status);
 
