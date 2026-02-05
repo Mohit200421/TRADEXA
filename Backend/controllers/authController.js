@@ -22,37 +22,22 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // ✅ CREATE USER FIRST (FAST)
+    // ✅ CREATE USER WITH EMAIL VERIFIED (SKIP OTP)
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      isEmailVerified: false,
-      emailOTP: otp,
-      emailOTPExpires: Date.now() + 10 * 60 * 1000,
+      isEmailVerified: true,
     });
 
     // ✅ RESPOND IMMEDIATELY
     res.status(201).json({
-      message: "Registered successfully. OTP sent to email.",
+      message: "Account created successfully. Please login.",
     });
-
-    // ✅ SEND EMAIL IN BACKGROUND (NON-BLOCKING)
-    sendEmail({
-      to: email,
-      subject: "Verify your TradeXA account",
-      html: emailOTPTemplate(otp),
-    }).catch((err) => {
-      console.error("Email send failed:", err.message);
-    });
-
   } catch (err) {
     res.status(500).json({ message: "Registration failed" });
   }
 };
-
 
 /* =========================
    VERIFY EMAIL OTP
@@ -67,11 +52,7 @@ const verifyEmailOTP = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    if (
-      !user ||
-      user.emailOTP !== otp ||
-      user.emailOTPExpires < Date.now()
-    ) {
+    if (!user || user.emailOTP !== otp || user.emailOTPExpires < Date.now()) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
@@ -85,7 +66,6 @@ const verifyEmailOTP = async (req, res) => {
     res.status(500).json({ message: "OTP verification failed" });
   }
 };
-
 
 /* =========================
    LOGIN
@@ -108,11 +88,9 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       token,
