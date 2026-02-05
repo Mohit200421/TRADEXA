@@ -7,16 +7,30 @@ export default function VerifyEmailOTP() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ✅ email must come from register page
   const email = location.state?.email || "";
-  const [otp, setOtp] = useState(Array(6).fill(""));
+
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [cooldown, setCooldown] = useState(60);
 
-  const inputsRef = useRef([]);
+  const inputsRef = useRef<HTMLInputElement[]>([]);
 
-  // 🔁 cooldown timer
+  /* =========================
+     🔐 GUARD (CRITICAL FIX)
+  ========================= */
+  useEffect(() => {
+    // 🚫 OTP page should NOT be accessible without email
+    if (!email) {
+      navigate("/login", { replace: true });
+    }
+  }, [email, navigate]);
+
+  /* =========================
+     ⏱ COOLDOWN TIMER
+  ========================= */
   useEffect(() => {
     if (cooldown === 0) return;
     const timer = setInterval(() => {
@@ -25,8 +39,10 @@ export default function VerifyEmailOTP() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  // 🔐 verify OTP
-  const verifyOTP = async (otpValue) => {
+  /* =========================
+     🔐 VERIFY OTP
+  ========================= */
+  const verifyOTP = async (otpValue: string) => {
     try {
       setLoading(true);
       setError("");
@@ -37,8 +53,12 @@ export default function VerifyEmailOTP() {
       });
 
       setSuccess(res.data.message);
-      setTimeout(() => navigate("/login"), 1300);
-    } catch (err) {
+
+      // ✅ After verification → login
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1200);
+    } catch (err: any) {
       setError(err.response?.data?.message || "Invalid or expired OTP");
       setOtp(Array(6).fill(""));
       inputsRef.current[0]?.focus();
@@ -47,7 +67,9 @@ export default function VerifyEmailOTP() {
     }
   };
 
-  // 🧠 auto-submit
+  /* =========================
+     🧠 AUTO SUBMIT
+  ========================= */
   useEffect(() => {
     const joined = otp.join("");
     if (joined.length === 6 && !otp.includes("")) {
@@ -55,7 +77,7 @@ export default function VerifyEmailOTP() {
     }
   }, [otp]);
 
-  const handleChange = (value, index) => {
+  const handleChange = (value: string, index: number) => {
     if (!/^\d?$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -67,7 +89,7 @@ export default function VerifyEmailOTP() {
     }
   };
 
-  const handleBackspace = (e, index) => {
+  const handleBackspace = (e: React.KeyboardEvent, index: number) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputsRef.current[index - 1]?.focus();
     }
@@ -81,7 +103,7 @@ export default function VerifyEmailOTP() {
       await API.post("/auth/resend-email-otp", { email });
       setSuccess("New OTP sent to your email");
       setCooldown(60);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || "Failed to resend OTP");
     }
   };
@@ -110,7 +132,7 @@ export default function VerifyEmailOTP() {
             </h2>
             <p className="text-emerald-100 max-w-md">
               We’ve sent a one-time password to your email to ensure account
-              security and protect your trading data.
+              security.
             </p>
           </div>
 
@@ -144,7 +166,7 @@ export default function VerifyEmailOTP() {
             {otp.map((digit, index) => (
               <input
                 key={index}
-                ref={(el) => (inputsRef.current[index] = el)}
+                ref={(el) => (inputsRef.current[index] = el!)}
                 type="text"
                 maxLength={1}
                 value={digit}
