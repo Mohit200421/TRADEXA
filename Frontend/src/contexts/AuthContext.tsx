@@ -37,21 +37,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const restore = async () => {
       try {
-        // ✅ FORCE token header (important for deployed)
-        const res = await API.get("/profile/me", {
+        // ✅ Use /auth/me for authentication check (always returns user data if authenticated)
+        const res = await API.get("/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // ✅ Handle null profile (user exists but no profile created yet)
-        if (res.data === null) {
-          // User is authenticated but hasn't created a profile yet
-          // Keep the token but don't set user data
-          setUserState(null);
-        } else {
-          updateUser(res.data);
-        }
+        // ✅ Set user data from auth endpoint
+        updateUser(res.data);
       } catch (err: any) {
         console.error("Auth restore failed:", err?.response?.status);
 

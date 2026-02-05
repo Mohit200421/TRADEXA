@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
 
 /* =========================
-   REGISTER (MAGIC LINK)
+   REGISTER (SIMPLE)
 ========================= */
 const register = async (req, res) => {
   try {
@@ -25,36 +25,11 @@ const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      isEmailVerified: false,
-    });
-
-    // 🔐 CREATE MAGIC LINK TOKEN
-    const token = jwt.sign(
-      { id: user._id, type: "email_verify" },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" }
-    );
-
-    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
-
-    await sendEmail({
-      to: email,
-      subject: "Verify your TradeXA account",
-      html: `
-        <h2>Welcome to TradeXA 👋</h2>
-        <p>Click the button below to verify your email:</p>
-        <a href="${verifyLink}" 
-           style="display:inline-block;padding:12px 20px;
-                  background:#10b981;color:#fff;
-                  border-radius:6px;text-decoration:none;">
-          Verify Email
-        </a>
-        <p>This link expires in 15 minutes.</p>
-      `,
+      isEmailVerified: true, // ✅ NO EMAIL VERIFICATION NEEDED
     });
 
     res.status(201).json({
-      message: "Verification link sent to your email",
+      message: "Account created successfully. Please login.",
     });
   } catch (err) {
     console.error(err);
@@ -91,11 +66,9 @@ const verifyEmailLink = async (req, res) => {
     await user.save();
 
     // 🔥 ISSUE LOGIN TOKEN
-    const authToken = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const authToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       message: "Email verified successfully",
@@ -111,7 +84,6 @@ const verifyEmailLink = async (req, res) => {
     res.status(400).json({ message: "Invalid or expired link" });
   }
 };
-
 
 /* =========================
    LOGIN
@@ -134,11 +106,9 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       token,
