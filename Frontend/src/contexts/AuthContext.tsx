@@ -19,7 +19,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-
   const restoredRef = useRef(false);
 
   /* =========================
@@ -30,17 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     restoredRef.current = true;
 
     const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    // ✅ Restore user safely
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUserState(parsed);
-      } catch {
-        localStorage.removeItem("user");
-      }
-    }
 
     if (!token) {
       setLoading(false);
@@ -49,10 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const restore = async () => {
       try {
-        const res = await API.get("/auth/me");
+        // ✅ FORCE token header (important for deployed)
+        const res = await API.get("/profile/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
         updateUser(res.data);
-      } catch {
-        // do NOT crash or logout
+      } catch (err: any) {
+        console.error("Auth restore failed:", err?.response?.status);
+
+        // ❗ IMPORTANT: clear broken auth
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUserState(null);
       } finally {
         setLoading(false);
       }
