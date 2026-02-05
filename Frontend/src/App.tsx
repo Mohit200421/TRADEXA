@@ -9,7 +9,7 @@ import PublicRoute from "./components/PublicRoute";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import VerifyEmailOTP from "./pages/VerifyEmailOTP";
+import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import HomePage from "./pages/HomePage";
@@ -65,7 +65,8 @@ export default function App() {
               }
             />
 
-            <Route path="/verify-email-otp" element={<VerifyEmailOTP />} />
+<Route path="/verify-email" element={<VerifyEmail />} />
+
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 

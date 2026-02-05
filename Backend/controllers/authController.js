@@ -2,10 +2,9 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/sendEmail");
-const { emailOTPTemplate } = require("../utils/emailTemplates");
 
 /* =========================
-   REGISTER (OTP BASED)
+   REGISTER (MAGIC LINK)
 ========================= */
 const register = async (req, res) => {
   try {
@@ -22,50 +21,97 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ CREATE USER WITH EMAIL VERIFIED (SKIP OTP)
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      isEmailVerified: true,
+      isEmailVerified: false,
     });
 
-    // ✅ RESPOND IMMEDIATELY
+    // 🔐 CREATE MAGIC LINK TOKEN
+    const token = jwt.sign(
+      { id: user._id, type: "email_verify" },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Verify your TradeXA account",
+      html: `
+        <h2>Welcome to TradeXA 👋</h2>
+        <p>Click the button below to verify your email:</p>
+        <a href="${verifyLink}" 
+           style="display:inline-block;padding:12px 20px;
+                  background:#10b981;color:#fff;
+                  border-radius:6px;text-decoration:none;">
+          Verify Email
+        </a>
+        <p>This link expires in 15 minutes.</p>
+      `,
+    });
+
     res.status(201).json({
-      message: "Account created successfully. Please login.",
+      message: "Verification link sent to your email",
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Registration failed" });
   }
 };
 
 /* =========================
-   VERIFY EMAIL OTP
+   VERIFY MAGIC LINK
 ========================= */
-const verifyEmailOTP = async (req, res) => {
+/* =========================
+   VERIFY MAGIC LINK (AUTO LOGIN)
+========================= */
+const verifyEmailLink = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { token } = req.query;
 
-    if (!email || !otp) {
-      return res.status(400).json({ message: "Email and OTP required" });
+    if (!token) {
+      return res.status(400).json({ message: "Token missing" });
     }
 
-    const user = await User.findOne({ email });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!user || user.emailOTP !== otp || user.emailOTPExpires < Date.now()) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
+    if (decoded.type !== "email_verify") {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
     }
 
     user.isEmailVerified = true;
-    user.emailOTP = null;
-    user.emailOTPExpires = null;
     await user.save();
 
-    res.json({ message: "Email verified successfully" });
+    // 🔥 ISSUE LOGIN TOKEN
+    const authToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Email verified successfully",
+      token: authToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (err) {
-    res.status(500).json({ message: "OTP verification failed" });
+    console.error(err);
+    res.status(400).json({ message: "Invalid or expired link" });
   }
 };
+
 
 /* =========================
    LOGIN
@@ -74,13 +120,13 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ message: "Please verify your email" });
     }
 
     const match = await bcrypt.compare(password, user.password);
@@ -88,9 +134,11 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({
       token,
@@ -106,54 +154,15 @@ const login = async (req, res) => {
 };
 
 /* =========================
-   LOGOUT
-========================= */
-const logout = async (req, res) => {
-  res.json({ message: "Logged out successfully" });
-};
-
-/* =========================
    GET CURRENT USER
 ========================= */
 const getMe = async (req, res) => {
   res.json(req.user);
 };
 
-/* =========================
-   RESEND EMAIL OTP
-========================= */
-const resendEmailOTP = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user || user.isEmailVerified) {
-      return res.status(400).json({ message: "Invalid request" });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    user.emailOTP = otp;
-    user.emailOTPExpires = Date.now() + 10 * 60 * 1000;
-    await user.save();
-
-    await sendEmail({
-      to: email,
-      subject: "Your new TradeXA OTP",
-      html: emailOTPTemplate(otp),
-    });
-
-    res.json({ message: "OTP resent successfully" });
-  } catch {
-    res.status(500).json({ message: "Failed to resend OTP" });
-  }
-};
-
 module.exports = {
   register,
-  verifyEmailOTP,
-  resendEmailOTP,
+  verifyEmailLink,
   login,
-  logout,
   getMe,
 };

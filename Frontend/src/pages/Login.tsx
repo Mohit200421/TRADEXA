@@ -43,19 +43,19 @@ export default function Login() {
          1️⃣ LOGIN
       ========================= */
       const res = await API.post("/auth/login", form);
-  
+
       if (!res.data?.token) {
         throw new Error("Token not received");
       }
-  
-      // ✅ Save token ONLY
+
+      // ✅ Save token
       localStorage.setItem("token", res.data.token);
-  
+
+      // ✅ Set user data immediately
+      setUser(res.data.user);
+
       toast.success("Login successful!");
-  
-      // ✅ DO NOT fetch /me here
-      // ✅ AuthContext will restore user safely
-  
+
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast.error(
