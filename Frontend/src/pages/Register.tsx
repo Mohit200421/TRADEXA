@@ -55,18 +55,12 @@ export default function Register() {
       const { confirmPassword, ...registerData } = form;
   
       await API.post("/auth/register", registerData);
-
-
   
-      toast.success(
-        "Account created! 📧 OTP sent to your email."
-      );
-      
-      // ✅ redirect to OTP page with email
-      navigate("/verify-email-otp", {
-        state: { email: form.email },
-      });
-       // ✅ go to login, NOT dashboard
+      toast.success("Account created successfully. Please login.");
+  
+      // ✅ DIRECT REDIRECT TO LOGIN
+      navigate("/login", { replace: true });
+  
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || "Registration failed";
@@ -75,6 +69,7 @@ export default function Register() {
       setIsLoading(false);
     }
   };
+  
   
 
   const getPasswordStrengthColor = (strength: number) => {

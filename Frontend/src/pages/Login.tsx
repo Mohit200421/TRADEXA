@@ -30,37 +30,33 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (!form.email || !form.password) {
       toast.error("Please fill in all fields");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
       /* =========================
          1️⃣ LOGIN
       ========================= */
-      const loginRes = await API.post("/auth/login", form);
-
-      // 🔥 SAVE TOKEN (THIS FIXES TRADE 401)
-      if (loginRes.data?.token) {
-        localStorage.setItem("token", loginRes.data.token);
+      const res = await API.post("/auth/login", form);
+  
+      if (!res.data?.token) {
+        throw new Error("Token not received");
       }
-
-      /* =========================
-         2️⃣ FETCH CURRENT USER
-      ========================= */
-      const meRes = await API.get("/auth/me");
-
-      /* =========================
-         3️⃣ UPDATE AUTH CONTEXT
-      ========================= */
-      setUser(meRes.data);
-      
-      toast.success("Login Successful!");
-      navigate("/dashboard");
+  
+      // ✅ Save token ONLY
+      localStorage.setItem("token", res.data.token);
+  
+      toast.success("Login successful!");
+  
+      // ✅ DO NOT fetch /me here
+      // ✅ AuthContext will restore user safely
+  
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast.error(
         err.response?.data?.message ||
@@ -70,6 +66,7 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+  
 
   const features = [
     {
