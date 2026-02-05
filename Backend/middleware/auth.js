@@ -1,30 +1,40 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
   try {
-    console.log("Auth middleware called for:", req.path);
     const authHeader = req.headers.authorization;
-    console.log("Auth header present:", !!authHeader);
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log("No auth header or doesn't start with Bearer");
       return res.status(401).json({ message: "Not authenticated" });
     }
 
     const token = authHeader.split(" ")[1];
-    console.log("Token extracted, verifying...");
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Token verified successfully, userId:", decoded.userId);
 
-    // ✅ ONLY store what actually exists in JWT
+    // ✅ SUPPORT BOTH id and userId (safe)
+    const userId = decoded.id || decoded.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
     req.user = {
-      id: decoded.userId,
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
     };
 
     next();
   } catch (err) {
-    console.log("Auth middleware error:", err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+    console.error("Auth middleware error:", err.message);
+    return res.status(401).json({ message: "Token invalid or expired" });
   }
 };
