@@ -4,7 +4,7 @@ exports.emailOTPTemplate = (otp) => `
 
   <p>
     We received a request to verify your email address for your
-    <strong>TradeFX</strong> account.
+    <strong>TradeXA</strong> account.
   </p>
 
   <p style="margin-top:20px; margin-bottom:10px;">
@@ -35,7 +35,7 @@ exports.emailOTPTemplate = (otp) => `
   <hr style="margin:30px 0; border:none; border-top:1px solid #e5e5e5;" />
 
   <p style="font-size:12px; color:#666;">
-    © TradeFX. All rights reserved.<br />
+    © TradeXA. All rights reserved.<br />
     This is an automated message. Please do not reply.
   </p>
 </div>

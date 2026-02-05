@@ -167,7 +167,7 @@ export default function Register() {
 
           {/* Footer */}
           <div className="text-emerald-100 text-sm">
-            <p>© {new Date().getFullYear()} TradeFX. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} TradeXA. All rights reserved.</p>
             <p className="text-xs mt-1">Professional Trading Analytics Platform</p>
           </div>
         </div>
@@ -382,7 +382,7 @@ export default function Register() {
           {/* Mobile Footer */}
           <div className="lg:hidden mt-8 text-center">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              <p>© {new Date().getFullYear()} TradeFX. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} TradeXA. All rights reserved.</p>
             </div>
           </div>
         </div>

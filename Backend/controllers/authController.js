@@ -42,7 +42,7 @@ const register = async (req, res) => {
     // ✅ SEND EMAIL IN BACKGROUND (NON-BLOCKING)
     sendEmail({
       to: email,
-      subject: "Verify your TradeFX account",
+      subject: "Verify your TradeXA account",
       html: emailOTPTemplate(otp),
     }).catch((err) => {
       console.error("Email send failed:", err.message);
@@ -161,7 +161,7 @@ const resendEmailOTP = async (req, res) => {
 
     await sendEmail({
       to: email,
-      subject: "Your new TradeFX OTP",
+      subject: "Your new TradeXA OTP",
       html: emailOTPTemplate(otp),
     });
 

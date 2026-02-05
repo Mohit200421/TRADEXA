@@ -97,7 +97,7 @@ export default function VerifyEmailOTP() {
               <TrendingUp className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">TradeFX Pro</h1>
+              <h1 className="text-2xl font-bold">TradeXA</h1>
               <p className="text-emerald-100 text-sm">
                 Professional Trading Journal
               </p>
@@ -115,7 +115,7 @@ export default function VerifyEmailOTP() {
           </div>
 
           <p className="text-sm text-emerald-100">
-            © {new Date().getFullYear()} TradeFX
+            © {new Date().getFullYear()} TradeXA
           </p>
         </div>
       </div>

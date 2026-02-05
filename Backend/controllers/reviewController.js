@@ -69,7 +69,7 @@ exports.exportReviewsPDF = async (req, res) => {
     const doc = new PDFDocument({ margin: 40, size: "A4" });
     doc.pipe(res);
 
-    doc.fontSize(18).text("TradeFX Reviews Report", { align: "center" });
+    doc.fontSize(18).text("TradeXA Reviews Report", { align: "center" });
     doc.moveDown();
 
     doc.fontSize(12).text(`Export Type: ${type || "ALL"}`);

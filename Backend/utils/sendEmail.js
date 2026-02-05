@@ -7,19 +7,13 @@ const getTransporter = async () => {
 
   transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    port: 465,          // ✅ CHANGE
+    secure: true,       // ✅ CHANGE (REQUIRED ON RENDER)
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    tls: {
-      rejectUnauthorized: false,
-    },
   });
-
-  // ✅ VERY IMPORTANT ON RENDER
-  await transporter.verify();
 
   return transporter;
 };

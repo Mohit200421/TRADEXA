@@ -127,7 +127,7 @@ export default function Login() {
                 Elevate Your Trading Journey
               </h2>
               <p className="text-blue-100">
-                Join thousands of successful traders who use TradeFX
+                Join thousands of successful traders who use TradeXA
                 to track, analyze, and improve their performance.
               </p>
             </div>
@@ -155,7 +155,7 @@ export default function Login() {
           {/* Footer */}
           <div className="text-blue-100 text-sm">
             <p>
-              © {new Date().getFullYear()} TradeFX. All rights
+              © {new Date().getFullYear()} TradeXA. All rights
               reserved.
             </p>
             <p className="text-xs mt-1">
@@ -283,7 +283,7 @@ export default function Login() {
           <div className="lg:hidden mt-8 text-center">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <p>
-                © {new Date().getFullYear()} TradeFX. All rights
+                © {new Date().getFullYear()} TradeXA. All rights
                 reserved.
               </p>
             </div>

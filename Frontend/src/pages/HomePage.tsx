@@ -577,7 +577,7 @@ const HomePage = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-2 mb-6 md:mb-0">
               <TrendingUp className="w-6 h-6 text-blue-500 dark:text-blue-400 animate-bounce" style={{ animationDelay: '0.2s' }} />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">TradeFX Pro</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">TradeXA</span>
             </div>
             <div className="text-gray-600 dark:text-gray-400 text-sm text-center mb-6 md:mb-0">
               MERN Stack Trading Journal & Performance Analytics System
@@ -595,7 +595,7 @@ const HomePage = () => {
             </div>
           </div>
           <div className="text-center text-gray-500 dark:text-gray-500 text-xs md:text-sm mt-6 md:mt-8">
-            © {new Date().getFullYear()} TradeFX. All rights reserved.
+            © {new Date().getFullYear()} TradeXA. All rights reserved.
           </div>
         </div>
       </footer>
