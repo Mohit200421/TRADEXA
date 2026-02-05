@@ -57,7 +57,7 @@ export default function Register() {
       await API.post("/auth/register", registerData);
   
       toast.success("Account created successfully. Please login.");
-  
+
       // ✅ DIRECT REDIRECT TO LOGIN
       navigate("/login", { replace: true });
   
