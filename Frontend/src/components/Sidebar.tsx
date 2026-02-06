@@ -141,7 +141,7 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
     );
   }
 
-  // Mobile Bottom Navigation
+  // Mobile Bottom Navigation Only
   return (
     <>
       {/* Mobile Bottom Navigation */}
@@ -179,71 +179,6 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
           })}
         </div>
       </nav>
-
-      {/* Mobile Floating Menu Button for Expanded Menu */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-br from-blue-600 to-cyan-500 text-white rounded-full shadow-lg flex items-center justify-center z-50 md:hidden"
-      >
-        {mobileMenuOpen ? (
-          <X className="w-6 h-6" />
-        ) : (
-          <Menu className="w-6 h-6" />
-        )}
-      </button>
-
-      {/* Mobile Expanded Menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onClick={() => setMobileMenuOpen(false)}>
-          <div className="absolute bottom-24 right-4 bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-4 min-w-48 border border-gray-200 dark:border-gray-800">
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 dark:text-white">TRADEXA</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Trading Analytics</p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              {desktopMenuItems.map(({ label, path, icon: Icon }) => {
-                const isActive = location.pathname === path;
-                return (
-                  <NavLink
-                    key={path}
-                    to={path}
-                    className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 text-blue-600 dark:text-blue-400' 
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }
-                    `}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-
-            {/* User Info */}
-            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-semibold text-white">JT</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">John Trader</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Pro Account</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Add padding to main content to avoid bottom nav overlap */}
       <style>{`

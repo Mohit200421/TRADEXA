@@ -7,15 +7,19 @@ const uploadScreenshots = require("../middleware/uploadScreenshots");
 const {
   createTrade,
   getTrades,
+  getTradeById,        // ✅ ADD
   deleteTrade,
   closeTrade,
+  updateTrade,
   updateTradeJournal,
 } = require("../controllers/tradeController");
 
 router.post("/", auth, uploadScreenshots.array("screenshots", 5), createTrade);
 
 router.get("/", auth, getTrades);
-router.delete("/:id", auth, deleteTrade);
+router.get("/:id", auth, getTradeById);      // ✅ ADD HERE
+
+router.put("/:id", auth, updateTrade);
 router.put("/:id/close", auth, closeTrade);
 
 router.put(
@@ -24,5 +28,8 @@ router.put(
   uploadScreenshots.array("screenshots", 5),
   updateTradeJournal
 );
+
+router.delete("/:id", auth, deleteTrade);
+
 
 module.exports = router;

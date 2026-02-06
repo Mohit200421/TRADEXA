@@ -17,6 +17,7 @@ import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import Trades from "./pages/Trades";
 import AddTradePage from "./pages/AddTradePage";
+import EditTrade from "./pages/EditTrade";
 import TradeDetails from "./pages/TradeDetails";
 import Reviews from "./pages/Reviews";
 import Replay from "./pages/Replay";
@@ -81,6 +82,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trades" element={<Trades />} />
               <Route path="/trades/add" element={<AddTradePage />} />
+              <Route path="/trades/edit/:id" element={<EditTrade />} />
               <Route path="/trades/:tradeId" element={<TradeDetails />} />
               <Route path="/reviews" element={<Reviews />} />
 

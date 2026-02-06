@@ -51,33 +51,23 @@ exports.createTrade = async (req, res) => {
       status = "CLOSED";
     }
 
-    /* ---------- PARSE JOURNAL ---------- */
     let journalData = {};
-    if (journal) {
-      journalData = JSON.parse(journal);
-    }
+    if (journal) journalData = JSON.parse(journal);
 
-    /* ---------- UPLOAD SCREENSHOTS ---------- */
     let screenshots = [];
-
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       for (const file of req.files) {
         const uploaded = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder: "tradexa/journals" },
-            (err, result) => {
-              if (err) reject(err);
-              else resolve(result);
-            }
+            (err, result) => (err ? reject(err) : resolve(result))
           );
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
-
         screenshots.push(uploaded.secure_url);
       }
     }
 
-    /* ---------- CREATE TRADE ---------- */
     const trade = await Trade.create({
       userId,
       symbol: symbol.toUpperCase(),
@@ -90,7 +80,6 @@ exports.createTrade = async (req, res) => {
       pips,
       pnl,
       status,
-
       journal: {
         preTrade: journalData.preTrade || "",
         postTrade: journalData.postTrade || "",
@@ -111,13 +100,34 @@ exports.createTrade = async (req, res) => {
 };
 
 /* =========================
-   GET TRADES
+   GET ALL TRADES
 ========================= */
 exports.getTrades = async (req, res) => {
   const trades = await Trade.find({ userId: req.user.id }).sort({
     entryDate: -1,
   });
   res.json(trades);
+};
+
+/* =========================
+   GET TRADE BY ID
+========================= */
+exports.getTradeById = async (req, res) => {
+  try {
+    const trade = await Trade.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!trade) {
+      return res.status(404).json({ message: "Trade not found" });
+    }
+
+    res.json(trade);
+  } catch (err) {
+    console.error("GET TRADE ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch trade" });
+  }
 };
 
 /* =========================
@@ -169,7 +179,76 @@ exports.closeTrade = async (req, res) => {
 };
 
 /* =========================
-   UPDATE JOURNAL
+   UPDATE TRADE (FULL EDIT)
+========================= */
+exports.updateTrade = async (req, res) => {
+  try {
+    const trade = await Trade.findOne({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+
+    if (!trade) {
+      return res.status(404).json({ message: "Trade not found" });
+    }
+
+    let {
+      symbol,
+      type,
+      entryPrice,
+      exitPrice,
+      lotSize,
+      entryDate,
+      exitDate,
+    } = req.body;
+
+    entryPrice = Number(entryPrice);
+    lotSize = Number(lotSize);
+
+    let safeExitPrice = null;
+    if (exitPrice !== "" && exitPrice !== null && exitPrice !== undefined) {
+      safeExitPrice = Number(exitPrice);
+    }
+
+    let pips = 0;
+    let pnl = 0;
+    let status = "OPEN";
+
+    if (safeExitPrice !== null) {
+      const result = calculatePnL({
+        symbol: symbol.toUpperCase(),
+        type: type.toUpperCase(),
+        entryPrice,
+        exitPrice: safeExitPrice,
+        lotSize,
+      });
+
+      pips = result?.pips || 0;
+      pnl = result?.pnl || 0;
+      status = "CLOSED";
+    }
+
+    trade.symbol = symbol.toUpperCase();
+    trade.type = type.toUpperCase();
+    trade.entryPrice = entryPrice;
+    trade.exitPrice = safeExitPrice;
+    trade.lotSize = lotSize;
+    trade.entryDate = new Date(entryDate);
+    trade.exitDate = exitDate ? new Date(exitDate) : null;
+    trade.pips = pips;
+    trade.pnl = pnl;
+    trade.status = status;
+
+    await trade.save();
+    res.json(trade);
+  } catch (err) {
+    console.error("UPDATE TRADE ERROR:", err);
+    res.status(500).json({ message: "Failed to update trade" });
+  }
+};
+
+/* =========================
+   UPDATE JOURNAL + SCREENSHOTS
 ========================= */
 exports.updateTradeJournal = async (req, res) => {
   try {
@@ -182,30 +261,29 @@ exports.updateTradeJournal = async (req, res) => {
       return res.status(404).json({ message: "Trade not found" });
     }
 
-    let journalData = req.body.journal
+    const journalData = req.body.journal
       ? JSON.parse(req.body.journal)
       : req.body;
 
-    let screenshots = trade.journal?.screenshots || [];
+    let screenshots = Array.isArray(journalData.screenshots)
+      ? journalData.screenshots
+      : trade.journal?.screenshots || [];
 
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       for (const file of req.files) {
         const uploaded = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
             { folder: "tradexa/journals" },
-            (err, result) => {
-              if (err) reject(err);
-              else resolve(result);
-            }
+            (err, result) => (err ? reject(err) : resolve(result))
           );
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
-
         screenshots.push(uploaded.secure_url);
       }
     }
 
     trade.journal = {
+      ...trade.journal,
       ...journalData,
       screenshots,
     };
