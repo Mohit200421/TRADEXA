@@ -216,14 +216,3 @@ If you like this project:
 * 🐛 Report issues
 * 💡 Suggest features
 
----
-
-If you want, next I can:
-
-* Improve README for **resume ranking**
-* Add **screenshots section**
-* Write **API documentation**
-* Make **architecture diagram**
-* Prepare **project explanation for interviews**
-
-Just tell me 👌
