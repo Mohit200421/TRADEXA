@@ -97,3 +97,14 @@
            bg-primary/10 text-primary;
   }
 }
+
+/* Add this if not already present */
+.mobile-content-padding {
+  padding-bottom: 70px;
+}
+
+@media (min-width: 768px) {
+  .mobile-content-padding {
+    padding-bottom: 0;
+  }
+}

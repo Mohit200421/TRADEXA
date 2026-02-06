@@ -3,7 +3,12 @@ import {
   Calculator,
   Brain,
   Sun,
-  TrendingUp
+  TrendingUp,
+  Target,
+  BarChart3,
+  Clock,
+  Zap,
+  ArrowRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,38 +16,36 @@ export default function Tools() {
   const navigate = useNavigate();
 
   return (
-    <>
+    <div className="space-y-6 sm:space-y-8">
       {/* ================= HEADER ================= */}
-      <div className="mb-8 flex items-start justify-between gap-6">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-primary/10 text-primary">
-            <Wrench size={22} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-50 
+                        dark:from-blue-900/20 dark:to-cyan-900/20 flex items-center justify-center">
+            <Wrench className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 dark:text-blue-400" />
           </div>
-
           <div>
-            <h1 className="text-2xl font-semibold">Trading Tools</h1>
-            <p className="text-sm text-text-secondary">
-              Professional calculators and utilities to enhance your trading workflow
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Trading Tools</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Professional calculators and utilities for better trading decisions
             </p>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex gap-4">
-          <StatBox value="2" label="AVAILABLE" />
-          <StatBox value="5" label="COMING SOON" />
+        {/* Stats - Mobile Responsive */}
+        <div className="flex gap-3">
+          <StatBox value="2" label="Available" />
+          <StatBox value="5" label="Coming Soon" />
         </div>
       </div>
 
-      <hr className="border-border mb-8" />
-
       {/* ================= TOOLS GRID ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* ================= POSITION SIZE ================= */}
         <ToolCard
-          icon={<Calculator size={22} />}
+          icon={<Calculator className="w-5 h-5 sm:w-6 sm:h-6" />}
           title="Position Size Calculator"
-          description="Calculate optimal lot size based on your risk tolerance and stop-loss distance"
+          description="Calculate optimal lot size based on risk tolerance and stop-loss"
           badge="POPULAR"
           active
           onClick={() => navigate("/tools/position-size-calculator")}
@@ -50,43 +53,85 @@ export default function Tools() {
 
         {/* ================= PROFIT CALCULATOR ================= */}
         <ToolCard
-          icon={<TrendingUp size={22} />}
+          icon={<TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />}
           title="Profit Calculator"
-          description="Calculate profit or loss using entry price, exit price, and lot size"
+          description="Calculate profit/loss using entry, exit prices, and lot size"
           active
           onClick={() => navigate("/tools/profit-calculator")}
         />
 
-        {/* ================= COMING SOON ================= */}
+        {/* ================= AI REPORT ANALYSER ================= */}
         <ToolCard
-          icon={<Brain size={22} />}
+          icon={<Brain className="w-5 h-5 sm:w-6 sm:h-6" />}
           title="AI Report & Analyser"
-          description="Get AI-powered analysis and detailed reports on your trading performance"
+          description="AI-powered analysis of your trading performance"
           comingSoon
         />
 
+        {/* ================= DEMO TRADING ================= */}
         <ToolCard
-          icon={<Sun size={22} />}
+          icon={<Sun className="w-5 h-5 sm:w-6 sm:h-6" />}
           title="Demo Trading"
-          description="Practice trading strategies risk-free with virtual funds"
+          description="Practice strategies risk-free with virtual funds"
+          comingSoon
+        />
+
+        {/* ================= RISK CALCULATOR ================= */}
+        <ToolCard
+          icon={<Target className="w-5 h-5 sm:w-6 sm:h-6" />}
+          title="Risk Calculator"
+          description="Calculate risk-reward ratios and position sizing"
+          comingSoon
+        />
+
+        {/* ================= TRADE JOURNAL ================= */}
+        <ToolCard
+          icon={<BarChart3 className="w-5 h-5 sm:w-6 sm:h-6" />}
+          title="Advanced Trade Journal"
+          description="Detailed analytics and performance tracking"
           comingSoon
         />
       </div>
-    </>
-  );
-}
 
-/* ================= SMALL COMPONENTS ================= */
-
-function StatBox({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="card px-6 py-4 text-center min-w-[120px]">
-      <p className="text-2xl font-semibold text-primary">{value}</p>
-      <p className="text-xs text-text-secondary tracking-wide">{label}</p>
+      {/* ================= COMING SOON SECTION ================= */}
+      <div className="mt-8 sm:mt-12">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
+          Upcoming Tools
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <ComingSoonCard 
+            icon={<Clock className="w-4 h-4" />}
+            title="Market Scanner"
+            description="Real-time market scanning for opportunities"
+          />
+          <ComingSoonCard 
+            icon={<Zap className="w-4 h-4" />}
+            title="Backtesting Engine"
+            description="Test strategies with historical data"
+          />
+          <ComingSoonCard 
+            icon={<Brain className="w-4 h-4" />}
+            title="Sentiment Analyzer"
+            description="Market sentiment analysis tool"
+          />
+        </div>
+      </div>
     </div>
   );
 }
 
+/* ================= STAT BOX COMPONENT ================= */
+function StatBox({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex-1 min-w-[100px] sm:min-w-[120px] bg-white dark:bg-gray-800 
+                  border border-gray-200 dark:border-gray-700 rounded-lg px-3 sm:px-4 py-3 text-center">
+      <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{value}</p>
+      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{label}</p>
+    </div>
+  );
+}
+
+/* ================= TOOL CARD COMPONENT ================= */
 function ToolCard({
   icon,
   title,
@@ -107,55 +152,96 @@ function ToolCard({
   return (
     <div
       onClick={active ? onClick : undefined}
-      className={`card p-6 flex flex-col justify-between transition
-        ${active ? "cursor-pointer hover:shadow-lg" : "cursor-default"}
+      className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 
+                p-4 sm:p-5 transition-all duration-200 flex flex-col h-full
+                ${active ? "cursor-pointer hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700" : ""}
+                ${comingSoon ? "opacity-70" : ""}
       `}
     >
-      <div>
-        {/* Icon + Badge */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="p-3 rounded-xl bg-border-light">
-            {icon}
-          </div>
-
-          {badge && (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-              {badge}
-            </span>
-          )}
-
-          {comingSoon && (
-            <span className="px-3 py-1 rounded-full text-xs font-medium bg-border-light text-text-secondary">
-              COMING SOON
-            </span>
-          )}
+      {/* Icon + Badge Header */}
+      <div className="flex items-start justify-between mb-3 sm:mb-4">
+        <div className={`p-2.5 rounded-lg ${
+          comingSoon 
+            ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400" 
+            : "bg-gradient-to-br from-blue-100 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 text-blue-600 dark:text-blue-400"
+        }`}>
+          {icon}
         </div>
 
-        {/* Content */}
-        <h3 className={`text-lg font-semibold ${comingSoon && "opacity-60"}`}>
+        {badge && (
+          <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium 
+                         bg-gradient-to-r from-blue-500 to-cyan-400 text-white">
+            {badge}
+          </span>
+        )}
+
+        {comingSoon && (
+          <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium 
+                         bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+            COMING SOON
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1">
+        <h3 className={`text-base sm:text-lg font-semibold mb-2 ${
+          comingSoon 
+            ? "text-gray-500 dark:text-gray-400" 
+            : "text-gray-900 dark:text-white"
+        }`}>
           {title}
         </h3>
 
-        <p
-          className={`text-sm mt-2 ${
-            comingSoon ? "opacity-50" : "text-text-secondary"
-          }`}
-        >
+        <p className={`text-xs sm:text-sm ${
+          comingSoon 
+            ? "text-gray-400 dark:text-gray-500" 
+            : "text-gray-600 dark:text-gray-400"
+        }`}>
           {description}
         </p>
       </div>
 
       {/* Footer */}
-      <div className="mt-6 pt-4 border-t border-border">
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700">
         {active ? (
-          <span className="flex items-center gap-2 text-sm font-medium text-primary">
-            Open Tool →
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1 group">
+              Open Tool
+              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            </span>
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+          </div>
         ) : (
-          <span className="text-xs text-text-secondary flex items-center gap-2">
-            ● In Development
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
+              In Development
+            </span>
+            <span className="text-xs text-gray-400">Q2 2024</span>
+          </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ================= COMING SOON CARD ================= */
+function ComingSoonCard({ icon, title, description }: { 
+  icon: React.ReactNode; 
+  title: string; 
+  description: string;
+}) {
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 
+                  rounded-lg p-3 sm:p-4 flex items-center gap-3">
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-700 
+                    flex items-center justify-center text-gray-500 dark:text-gray-400">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white">{title}</h4>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>
       </div>
     </div>
   );

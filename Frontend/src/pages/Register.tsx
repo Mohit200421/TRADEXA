@@ -1,5 +1,16 @@
 import { useState } from "react";
-import { Eye, EyeOff, User, Mail, Lock, Check, UserPlus, TrendingUp, BarChart3, Shield, Cloud } from "lucide-react";
+import { 
+  Eye, 
+  EyeOff, 
+  User, 
+  Mail, 
+  Lock, 
+  Check, 
+  UserPlus, 
+  TrendingUp,
+  ArrowRight,
+  Sparkles
+} from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
 import { useNavigate, Link } from "react-router-dom";
@@ -15,6 +26,7 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,8 +69,6 @@ export default function Register() {
       await API.post("/auth/register", registerData);
   
       toast.success("Account created successfully. Please login.");
-
-      // ✅ DIRECT REDIRECT TO LOGIN
       navigate("/login", { replace: true });
   
     } catch (err: any) {
@@ -69,16 +79,6 @@ export default function Register() {
       setIsLoading(false);
     }
   };
-  
-  
-
-  const getPasswordStrengthColor = (strength: number) => {
-    if (strength === 0) return "bg-gray-200 dark:bg-gray-700";
-    if (strength === 1) return "bg-red-500";
-    if (strength === 2) return "bg-orange-500";
-    if (strength === 3) return "bg-yellow-500";
-    return "bg-green-500";
-  };
 
   const getPasswordStrengthText = (strength: number) => {
     if (strength === 0) return "Very Weak";
@@ -88,297 +88,347 @@ export default function Register() {
     return "Strong";
   };
 
-  const passwordRequirements = [
-    { text: "At least 8 characters", met: form.password.length >= 8 },
-    { text: "Contains uppercase letter", met: /[A-Z]/.test(form.password) },
-    { text: "Contains number", met: /[0-9]/.test(form.password) },
-    { text: "Contains special character", met: /[^A-Za-z0-9]/.test(form.password) },
-  ];
-
-  const features = [
-    {
-      icon: <BarChart3 className="w-8 h-8" />,
-      title: "Real-time Analytics",
-      description: "Monitor your trading performance with live dashboards"
-    },
-    {
-      icon: <TrendingUp className="w-8 h-8" />,
-      title: "Chart Replay",
-      description: "Practice trading strategies with historical data"
-    },
-    {
-      icon: <Shield className="w-8 h-8" />,
-      title: "Secure Storage",
-      description: "Your trade data is encrypted and safely stored"
-    },
-    {
-      icon: <Cloud className="w-8 h-8" />,
-      title: "Cloud Backup",
-      description: "Access your journal from anywhere, anytime"
-    }
+  const benefits = [
+    "Track performance metrics",
+    "Set and achieve goals",
+    "Real-time analytics",
+    "Bank-level security"
   ];
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Brand & Features */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 to-teal-500 p-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10"></div>
-        
-        <div className="relative z-10 flex flex-col justify-between h-full">
-          {/* Logo */}
-          <div>
-            <Link to="/" className="inline-flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">TRADEXA</h1>
-                <p className="text-emerald-100 text-sm">Professional Trading Journal</p>
-              </div>
-            </Link>
+    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      <div className="h-full flex flex-col lg:flex-row">
+        {/* Left Side - Benefits (Desktop only) */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-500 p-8 relative overflow-hidden">
+          {/* Animated Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -left-20 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-cyan-500/20 rounded-full blur-3xl"></div>
           </div>
 
-          {/* Features */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-3xl font-bold text-white mb-4">
-                Start Your Trading Journey
-              </h2>
-              <p className="text-emerald-100">
-                Join a community of disciplined traders who track, analyze, and improve their performance systematically.
+          <div className="relative z-10 flex flex-col w-full">
+            {/* Logo */}
+            <div className="h-16">
+              <Link 
+                to="/" 
+                className="inline-flex items-center gap-3"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+              >
+                <div className={`
+                  w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl 
+                  flex items-center justify-center 
+                  transition-all duration-300 
+                  ${isHovered ? 'scale-105 rotate-3' : ''}
+                  border border-white/30
+                `}>
+                  <TrendingUp className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white tracking-tight">
+                    TRADEXA
+                  </h1>
+                  <p className="text-emerald-100/80 text-sm">
+                    Professional Trading Analytics
+                  </p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Main Content - Centered */}
+            <div className="flex-1 flex items-center">
+              <div className="w-full max-w-md">
+                {/* Header */}
+                <div className="mb-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-full mb-3 border border-white/20">
+                    <Sparkles className="w-3 h-3 text-yellow-300" />
+                    <span className="text-xs text-white font-medium">
+                      Join 10,000+ successful traders
+                    </span>
+                  </div>
+                  
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Start Your Trading Journey
+                  </h2>
+                  <p className="text-emerald-100/80">
+                    Professional platform designed to help traders improve their performance
+                  </p>
+                </div>
+
+                {/* Benefits List */}
+                <div className="mb-4">
+                  {benefits.map((benefit, index) => (
+                    <div key={index} className="flex items-center gap-2 mb-2">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                      <span className="text-emerald-100/90 text-sm">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Testimonial */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
+                  <p className="text-white/90 text-sm mb-1 italic">
+                    "TradeXA helped me identify patterns I was missing."
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-emerald-100/70 text-xs">
+                      Michael Rodriguez, Full-time Trader
+                    </span>
+                    <div className="flex text-yellow-300 text-xs">
+                      {"★".repeat(5)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="h-12 flex items-center border-t border-white/10">
+              <p className="text-emerald-100/60 text-xs">
+                © {new Date().getFullYear()} TradeXA • Secure Trading Platform
               </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-6">
-              {features.map((feature, index) => (
-                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                  <div className="text-white mb-3">{feature.icon}</div>
-                  <h3 className="font-semibold text-white text-sm mb-1">{feature.title}</h3>
-                  <p className="text-emerald-100 text-xs">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-emerald-100 text-sm">
-            <p>© {new Date().getFullYear()} TradeXA. All rights reserved.</p>
-            <p className="text-xs mt-1">Professional Trading Analytics Platform</p>
           </div>
         </div>
-      </div>
 
-      {/* Right Side - Register Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-        <div className="w-full max-w-md">
-          {/* Mobile Header */}
-          <div className="lg:hidden mb-8">
-            <Link to="/" className="inline-flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
+        {/* Right Side - Compact Register Form */}
+        <div className="flex-1 flex items-center justify-center p-4 lg:p-8">
+          <div className="w-full max-w-sm mx-auto">
+            {/* Mobile Header */}
+            <div className="lg:hidden mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div className="ml-3">
+                  <h1 className="text-lg font-bold text-gray-900 dark:text-white">
+                    TRADEXA
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs">
+                    Professional Trading Analytics
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">TRADEXA</h1>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Professional Trading Journal</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Register Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h2>
-              <p className="text-gray-600 dark:text-gray-300">Start your trading journey with professional analytics</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Name Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Full Name
-                </label>
-                <div className="relative">
+            {/* Form Container - Card only on desktop */}
+            <div className="lg:bg-white lg:dark:bg-gray-800 lg:rounded-xl lg:shadow-lg lg:border lg:border-gray-200 lg:dark:border-gray-700 lg:p-6">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                  Create Account
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  Start your trading journey with professional analytics
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Name Field */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Full Name
+                  </label>
                   <input
-                    className="w-full p-4 pl-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                             rounded text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 
+                             focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent 
+                             transition-all duration-150 text-sm"
                     placeholder="Enter your full name"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
                     required
+                    autoComplete="name"
                   />
-                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
-              </div>
 
-              {/* Email Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email Address
-                </label>
-                <div className="relative">
+                {/* Email Field */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Email Address
+                  </label>
                   <input
-                    className="w-full p-4 pl-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                    className="w-full p-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                             rounded text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 
+                             focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent 
+                             transition-all duration-150 text-sm"
                     placeholder="Enter your email"
                     name="email"
                     type="email"
                     value={form.email}
                     onChange={handleChange}
                     required
+                    autoComplete="email"
                   />
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                </div>
-              </div>
-
-              {/* Password Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    className="w-full p-4 pl-12 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Create a strong password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={handleChange}
-                    required
-                    autoComplete="new-password"
-                  />
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
                 </div>
 
-                {/* Password Strength */}
-                {form.password && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Password Strength</span>
-                      <span className={`text-xs font-medium ${
-                        passwordStrength === 0 ? "text-gray-500" :
-                        passwordStrength <= 2 ? "text-red-500" :
-                        passwordStrength === 3 ? "text-yellow-500" : "text-green-500"
-                      }`}>
-                        {getPasswordStrengthText(passwordStrength)}
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all duration-300 ${getPasswordStrengthColor(passwordStrength)}`}
-                        style={{ width: `${(passwordStrength / 4) * 100}%` }}
-                      />
-                    </div>
+                {/* Password Field */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      className="w-full p-2.5 pr-9 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                               rounded text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 
+                               focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent 
+                               transition-all duration-150 text-sm"
+                      placeholder="Create a strong password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-0.5 
+                               text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+                               transition-colors"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
                   </div>
-                )}
-              </div>
+                  {form.password && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Strength: {getPasswordStrengthText(passwordStrength)}
+                      </span>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4].map((level) => (
+                          <div
+                            key={level}
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              level <= passwordStrength
+                                ? level <= 2 ? "bg-red-500" :
+                                  level === 3 ? "bg-yellow-500" : "bg-green-500"
+                                : "bg-gray-300 dark:bg-gray-600"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-              {/* Confirm Password Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Lock className="w-4 h-4" />
-                  Confirm Password
-                </label>
-                <div className="relative">
+                {/* Confirm Password Field */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      className="w-full p-2.5 pr-9 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                               rounded text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 
+                               focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent 
+                               transition-all duration-150 text-sm"
+                      placeholder="Confirm your password"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      autoComplete="new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-2.5 top-1/2 transform -translate-y-1/2 p-0.5 
+                               text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+                               transition-colors"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-3.5 h-3.5" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                  {form.confirmPassword && form.password !== form.confirmPassword && (
+                    <p className="text-xs text-red-500 mt-0.5">Passwords do not match</p>
+                  )}
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="flex items-start gap-2">
                   <input
-                    className="w-full p-4 pl-12 pr-12 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    placeholder="Confirm your password"
-                    name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={form.confirmPassword}
-                    onChange={handleChange}
+                    type="checkbox"
+                    id="terms"
+                    className="mt-0.5 w-3.5 h-3.5 text-emerald-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 
+                             rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 focus:ring-1"
                     required
                   />
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
+                  <label htmlFor="terms" className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
+                    I agree to the{" "}
+                    <Link to="/terms" className="text-emerald-600 dark:text-emerald-400 hover:underline">
+                      Terms
+                    </Link>{" "}
+                    and{" "}
+                    <Link to="/privacy" className="text-emerald-600 dark:text-emerald-400 hover:underline">
+                      Privacy Policy
+                    </Link>
+                  </label>
                 </div>
-                {form.confirmPassword && form.password !== form.confirmPassword && (
-                  <p className="text-xs text-red-500">Passwords do not match</p>
-                )}
-                {form.confirmPassword && form.password === form.confirmPassword && form.password.length >= 8 && (
-                  <p className="text-xs text-green-500 flex items-center gap-1">
-                    <Check className="w-3 h-3" />
-                    Passwords match
-                  </p>
-                )}
+
+                {/* Create Account Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white 
+                           rounded font-semibold hover:opacity-90 transition-all duration-150 
+                           disabled:opacity-50 disabled:cursor-not-allowed 
+                           flex items-center justify-center gap-1.5 
+                           text-sm shadow-sm hover:shadow"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      Create Account
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="flex items-center my-4">
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+                <span className="px-2 text-xs text-gray-500 dark:text-gray-400">
+                  Already have an account?
+                </span>
+                <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
               </div>
 
-              {/* Terms Checkbox */}
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  className="mt-1 w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2"
-                  required
-                />
-                <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-400">
-                  I agree to the{" "}
-                  <Link to="/terms" className="text-emerald-600 dark:text-emerald-400 hover:underline">
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link to="/privacy" className="text-emerald-600 dark:text-emerald-400 hover:underline">
-                    Privacy Policy
-                  </Link>
-                </label>
-              </div>
-
-              {/* Register Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating Account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-5 h-5" />
-                    Create Account
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Divider */}
-            <div className="flex items-center my-8">
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-              <span className="px-4 text-sm text-gray-500 dark:text-gray-400">Already have an account?</span>
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
-            </div>
-
-            {/* Login Link */}
-            <div className="text-center">
+              {/* Sign In Link */}
               <Link
                 to="/login"
-                className="inline-block w-full py-3 bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl font-medium transition-all"
+                className="block w-full py-2 bg-transparent border border-gray-300 dark:border-gray-600 
+                         text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 
+                         rounded font-medium transition-all duration-150 hover:border-gray-400 
+                         dark:hover:border-gray-500 text-center text-sm"
               >
                 Sign In to Existing Account
               </Link>
-            </div>
-          </div>
 
-          {/* Mobile Footer */}
-          <div className="lg:hidden mt-8 text-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <p>© {new Date().getFullYear()} TradeXA. All rights reserved.</p>
+              {/* Footer Note */}
+              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center">
+                  Secure registration • Data encrypted • © {new Date().getFullYear()} TradeXA
+                </p>
+              </div>
             </div>
           </div>
         </div>

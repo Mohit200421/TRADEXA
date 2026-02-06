@@ -12,6 +12,10 @@ import {
   Moon,
   Clock,
   LucideIcon,
+  Menu,
+  Search,
+  TrendingUp,
+  Globe,
 } from "lucide-react";
 
 import { useAuth } from "../contexts/AuthContext";
@@ -20,6 +24,7 @@ import defaultAvatar from "../assets/default-avatar.svg";
 
 interface TopbarProps {
   collapsed: boolean;
+  onMenuClick?: () => void; // New prop for mobile menu toggle
 }
 
 /* =========================
@@ -50,12 +55,13 @@ const TIME_ZONES = [
   { label: "Sydney", value: "Australia/Sydney" },
 ];
 
-export default function Topbar({ collapsed }: TopbarProps) {
+export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
   const { logout, user } = useAuth();
   const { profile } = useProfile();
 
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(false);
 
   const [time, setTime] = useState<Date>(new Date());
   const [timezone, setTimezone] = useState<string>(
@@ -64,6 +70,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
 
   const [open, setOpen] = useState(false);
   const [tzOpen, setTzOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const [dark, setDark] = useState(
     document.documentElement.classList.contains("dark")
@@ -71,6 +78,21 @@ export default function Topbar({ collapsed }: TopbarProps) {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const tzRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  /* =========================
+     CHECK MOBILE ON MOUNT
+  ========================= */
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
   /* =========================
      PAGE TITLE
@@ -89,23 +111,22 @@ export default function Topbar({ collapsed }: TopbarProps) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    timeZone: timezone, // ✅ correct state variable
+    timeZone: timezone,
   }).format(time);
-  
 
   /* =========================
      CLOSE DROPDOWNS
   ========================= */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
       if (tzRef.current && !tzRef.current.contains(e.target as Node)) {
         setTzOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -137,111 +158,226 @@ export default function Topbar({ collapsed }: TopbarProps) {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-surface border-b border-border
-        flex items-center justify-between px-6 z-50
+      className={`fixed top-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800
+        flex items-center justify-between px-4 md:px-6 z-40
         transition-all duration-300
-        ${collapsed ? "left-20" : "left-64"}
+        ${isMobile ? 'left-0' : collapsed ? "left-20" : "left-64"}
       `}
     >
-      {/* LEFT */}
-      <div>
-        <h1 className="text-lg font-semibold">{pageTitle}</h1>
-        <p className="text-xs text-text-secondary">
-          {time.toLocaleDateString(undefined, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          })}
-        </p>
+      {/* LEFT SECTION */}
+      <div className="flex items-center gap-3">
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <button
+            onClick={onMenuClick}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+        )}
+
+        {/* Logo (Mobile) */}
+        {isMobile && (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-gray-900 dark:text-white text-sm hidden sm:inline">
+              TRADEXA
+            </span>
+          </div>
+        )}
+
+        {/* Page Title */}
+        <div className={`${isMobile ? 'hidden sm:block' : ''}`}>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {pageTitle}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {time.toLocaleDateString(undefined, {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            })}
+          </p>
+        </div>
       </div>
 
-      {/* RIGHT */}
-      <div className="flex items-center gap-4">
-        {/* Theme */}
+      {/* RIGHT SECTION */}
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Search Button (Mobile) */}
+        {isMobile && (
+          <div className="relative" ref={searchRef}>
+            <button
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+            
+            {searchOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded">
+                  <Search className="w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search trades, markets, tools..."
+                    className="w-full bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-border-light"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {dark ? <Sun size={18} /> : <Moon size={18} />}
+          {dark ? (
+            <Sun className="w-5 h-5 text-yellow-500" />
+          ) : (
+            <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          )}
         </button>
 
-        {/* CLOCK + TIMEZONE */}
-        <div className="relative" ref={tzRef}>
+        {/* Timezone & Clock */}
+        <div className="relative hidden sm:block" ref={tzRef}>
           <button
-            onClick={() => setTzOpen((p) => !p)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm font-medium hover:bg-border-light"
+            onClick={() => setTzOpen(!tzOpen)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
           >
-            <Clock size={16} />
-            <span>{formattedTime}</span>
-            <span className="text-xs text-text-secondary">
+            <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-500" />
+            <span className="text-gray-700 dark:text-gray-300">{formattedTime}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 hidden lg:inline">
               ({activeTimezoneLabel})
             </span>
+            <Globe className="w-3 h-3 text-gray-400" />
           </button>
 
           {tzOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-surface border border-border rounded-xl shadow-lg p-1 text-sm">
-              {TIME_ZONES.map((tz) => (
-                <button
-                  key={tz.value}
-                  onClick={() => {
-                    setTimezone(tz.value);
-                    setTzOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-border-light ${
-                    timezone === tz.value
-                      ? "bg-border-light font-medium"
-                      : ""
-                  }`}
-                >
-                  {tz.label}
-                </button>
-              ))}
+            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 text-sm z-50">
+              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Select Timezone</p>
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                {TIME_ZONES.map((tz) => (
+                  <button
+                    key={tz.value}
+                    onClick={() => {
+                      setTimezone(tz.value);
+                      setTzOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                      timezone === tz.value
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    <span>{tz.label}</span>
+                    {timezone === tz.value && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         {/* Notification */}
-        <button className="p-2 rounded-lg hover:bg-border-light">
-          <Bell size={18} />
-        </button>
+        <div className="relative">
+          <button
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              3
+            </span>
+          </button>
+        </div>
 
-        {/* Profile */}
+        {/* Profile Dropdown */}
         <div className="relative" ref={dropdownRef}>
           <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="flex items-center gap-2 p-1.5 rounded-full hover:bg-border-light"
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
           >
-            <img
-              src={avatarUrl}
-              alt="User avatar"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <ChevronDown size={16} />
+            <div className="relative">
+              <img
+                src={avatarUrl}
+                alt="User avatar"
+                className="w-8 h-8 rounded-full object-cover border-2 border-transparent group-hover:border-blue-500 transition-colors"
+              />
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-lg overflow-hidden">
-              {/* USER */}
-              <div className="p-4 border-b border-border">
-                <p className="font-medium">
-                  {profile?.fullName || user?.name}
-                </p>
-                <p className="text-xs text-text-secondary">
-                  {user?.email}
-                </p>
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
+              {/* User Info */}
+              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={avatarUrl}
+                    alt="User avatar"
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {profile?.fullName || user?.name || "Trader"}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {user?.email}
+                    </p>
+                    <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-xs rounded-full">
+                      <TrendingUp className="w-3 h-3" />
+                      <span>Pro Account</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* MENU */}
-              <div className="p-2 space-y-1 text-sm">
+              {/* Menu Items */}
+              <div className="py-2 space-y-1">
                 <MenuItem
                   icon={User}
                   label="My Profile"
-                  onClick={() => navigate("/profile")}
+                  onClick={() => {
+                    navigate("/profile");
+                    setOpen(false);
+                  }}
                 />
-                <MenuItem icon={Settings} label="Settings" />
-                <MenuItem icon={CreditCard} label="Subscription" />
-                <MenuItem icon={HelpCircle} label="Help & Support" />
-                <hr className="my-1 border-border" />
+                <MenuItem
+                  icon={Settings}
+                  label="Settings"
+                  onClick={() => {
+                    navigate("/settings");
+                    setOpen(false);
+                  }}
+                />
+                <MenuItem
+                  icon={CreditCard}
+                  label="Subscription"
+                  onClick={() => {
+                    navigate("/subscription");
+                    setOpen(false);
+                  }}
+                />
+                <MenuItem
+                  icon={HelpCircle}
+                  label="Help & Support"
+                  onClick={() => {
+                    navigate("/help");
+                    setOpen(false);
+                  }}
+                />
+                <div className="h-px bg-gray-100 dark:bg-gray-700 my-2"></div>
                 <MenuItem
                   icon={LogOut}
                   label="Sign Out"
@@ -258,7 +394,7 @@ export default function Topbar({ collapsed }: TopbarProps) {
 }
 
 /* =========================
-   MENU ITEM
+   MENU ITEM COMPONENT
 ========================= */
 function MenuItem({
   icon: Icon,
@@ -274,14 +410,14 @@ function MenuItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition
+      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors
         ${
           danger
-            ? "text-red-500 hover:bg-red-500/10"
-            : "hover:bg-border-light"
+            ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:text-red-400"
+            : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
         }`}
     >
-      <Icon size={16} />
+      <Icon className={`w-4 h-4 ${danger ? '' : 'text-gray-500 dark:text-gray-400'}`} />
       {label}
     </button>
   );

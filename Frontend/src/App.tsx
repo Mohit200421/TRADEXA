@@ -41,7 +41,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <Toaster position="top-right" />
+          <Toaster position="bottom-right" />
 
           <Routes>
             {/* ================= PUBLIC ROUTES ================= */}

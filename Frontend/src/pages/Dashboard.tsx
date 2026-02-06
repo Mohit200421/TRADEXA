@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import StatCard from "../components/StatCard";
 import {
   DollarSign,
   Target,
   TrendingUp,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
@@ -16,7 +18,7 @@ interface Trade {
   pnl: number;
   status: "OPEN" | "CLOSED";
   entryDate: string;
-  symbol: string; // ✅ REQUIRED
+  symbol: string;
 }
 
 /* =====================
@@ -28,6 +30,15 @@ function getLocalDateKey(dateStr: string) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export default function Dashboard() {
@@ -128,64 +139,70 @@ export default function Dashboard() {
     currentMonth.getMonth() + 1
   ).padStart(2, "0")}`;
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-text-secondary">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="space-y-6">
       {/* =====================
-          TOP STATS (CUSTOM UI)
+          TOP STATS (CUSTOM UI) - Mobile Responsive
       ===================== */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* TOTAL P&L */}
-        <div className="card p-5 relative">
-          <span className="absolute top-4 right-4 text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium">
+        <div className="card p-4 sm:p-5 relative">
+          <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 font-medium">
             TOTAL
           </span>
 
-          <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
-            <DollarSign className="text-blue-600" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-3 sm:mb-4">
+            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
           </div>
 
-          <p className="text-sm text-text-secondary">TOTAL P&amp;L</p>
-          <p
-  className={`text-3xl font-bold ${
-    totalPnL >= 0 ? "text-blue-600" : "text-red-500"
-  }`}
->
-  {totalPnL >= 0 ? "+" : ""}${Math.abs(totalPnL).toFixed(2)}
-</p>
+          <p className="text-xs sm:text-sm text-text-secondary">TOTAL P&amp;L</p>
+          <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${
+            totalPnL >= 0 ? "text-blue-600" : "text-red-500"
+          }`}>
+            {totalPnL >= 0 ? "+" : ""}{formatCurrency(totalPnL)}
+          </p>
 
-
-          <p className="text-sm text-text-secondary mt-2">
+          <p className="text-xs sm:text-sm text-text-secondary mt-2">
             → {closedTrades.length} trades
           </p>
         </div>
 
         {/* WIN RATE */}
-        <div className="card p-5">
-          <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
-            <Target className="text-purple-600" />
+        <div className="card p-4 sm:p-5">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-3 sm:mb-4">
+            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
           </div>
 
-          <p className="text-sm text-text-secondary">WIN RATE</p>
-          <p className="text-3xl font-bold">{winRate}%</p>
+          <p className="text-xs sm:text-sm text-text-secondary">WIN RATE</p>
+          <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{winRate}%</p>
 
           <div className="w-full h-2 bg-border-light rounded-full mt-3">
             <div
-              className="h-2 bg-blue-500 rounded-full"
+              className="h-2 bg-blue-500 rounded-full transition-all duration-500"
               style={{ width: `${winRate}%` }}
             />
           </div>
         </div>
 
         {/* PROFIT FACTOR */}
-        <div className="card p-5">
-          <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
-            <TrendingUp className="text-green-600" />
+        <div className="card p-4 sm:p-5 col-span-1 xs:col-span-2 lg:col-span-1">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-3 sm:mb-4">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
           </div>
 
-          <p className="text-sm text-text-secondary">PROFIT FACTOR</p>
-          <p className="text-3xl font-bold">
+          <p className="text-xs sm:text-sm text-text-secondary">PROFIT FACTOR</p>
+          <p className="text-xl sm:text-2xl lg:text-3xl font-bold">
             {profitFactor ?? "--"}
           </p>
 
@@ -196,23 +213,23 @@ export default function Dashboard() {
       </section>
 
       {/* =====================
-          MONTHLY P&L
+          MONTHLY P&L - Mobile Responsive
       ===================== */}
-      <section className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
         {/* CALENDAR */}
-        <div className="xl:col-span-2 card p-5">
-          <div className="flex items-center justify-between mb-3">
+        <div className="lg:col-span-2 card p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
-              <Calendar size={18} />
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
               <div>
-                <h3 className="font-semibold">Trading Calendar</h3>
+                <h3 className="font-semibold text-sm sm:text-base">Trading Calendar</h3>
                 <p className="text-xs text-text-secondary">
                   Daily P&amp;L heatmap – Click on days to see trades
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between sm:justify-start gap-3">
               <button
                 className="w-8 h-8 rounded-md bg-border-light hover:bg-border flex items-center justify-center"
                 onClick={() =>
@@ -225,12 +242,12 @@ export default function Dashboard() {
                   )
                 }
               >
-                ‹
+                <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <span className="font-medium text-sm">
+              <span className="font-medium text-sm min-w-[120px] text-center">
                 {currentMonth.toLocaleString("default", {
-                  month: "long",
+                  month: "short",
                   year: "numeric",
                 })}
               </span>
@@ -247,20 +264,23 @@ export default function Dashboard() {
                   )
                 }
               >
-                ›
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* WEEKDAYS */}
-          <div className="grid grid-cols-7 text-xs font-medium text-center mb-2">
-            {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map(d => (
-              <div key={d}>{d}</div>
+          {/* WEEKDAYS - Mobile Responsive */}
+          <div className="grid grid-cols-7 text-[10px] xs:text-xs font-medium text-center mb-2">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={i} className="hidden xs:block">{["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][i]}</div>
+            ))}
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={`mobile-${i}`} className="block xs:hidden">{d}</div>
             ))}
           </div>
 
-          {/* DAYS */}
-          <div className="grid grid-cols-7 gap-2">
+          {/* DAYS - Mobile Responsive */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2">
             {Array.from({ length: firstDayOffset }).map((_, i) => (
               <div key={i} />
             ))}
@@ -269,51 +289,77 @@ export default function Dashboard() {
               const day = i + 1;
               const dateKey = `${monthKey}-${String(day).padStart(2, "0")}`;
               const tradesForDay = dailyTrades[dateKey];
-              const pnl =
-                tradesForDay?.reduce((s, t) => s + t.pnl, 0) ?? null;
+              const pnl = tradesForDay?.reduce((s, t) => s + t.pnl, 0) ?? null;
+              const isToday = dateKey === new Date().toISOString().split('T')[0];
 
               return (
-                <div
+                <button
                   key={dateKey}
                   onClick={() => tradesForDay && setSelectedDate(dateKey)}
-                  className={`h-16 rounded-lg border p-2 cursor-pointer
-                    ${
-                      pnl === null
-                        ? "bg-bg"
-                        : pnl >= 0
-                        ? "border-blue-500"
-                        : "border-red-500"
+                  disabled={!tradesForDay}
+                  className={`h-10 sm:h-14 md:h-16 rounded-lg border p-1 sm:p-2 transition-all duration-200
+                    ${pnl === null
+                      ? "bg-bg cursor-default"
+                      : "cursor-pointer hover:shadow-md"
                     }
-                    ${
-                      selectedDate === dateKey
-                        ? "ring-2 ring-primary"
-                        : ""
+                    ${pnl !== null && pnl >= 0
+                      ? "border-blue-500 bg-blue-50"
+                      : pnl !== null && pnl < 0
+                      ? "border-red-500 bg-red-50"
+                      : "border-border"
+                    }
+                    ${selectedDate === dateKey
+                      ? "ring-2 ring-primary shadow-md"
+                      : ""
+                    }
+                    ${isToday
+                      ? "ring-1 ring-blue-300"
+                      : ""
                     }
                   `}
                 >
-                  <div className="text-sm font-medium">{day}</div>
-                  {pnl !== null && (
-                    <div
-                      className={`text-xs font-semibold mt-1 ${
+                  <div className="text-xs sm:text-sm font-medium flex flex-col items-center">
+                    <span className={isToday ? "text-blue-600 font-bold" : ""}>
+                      {day}
+                    </span>
+                    {pnl !== null && (
+                      <span className={`text-[10px] xs:text-xs font-semibold mt-0.5 ${
                         pnl >= 0 ? "text-blue-500" : "text-red-500"
-                      }`}
-                    >
-                      {pnl >= 0 ? "+" : ""}${pnl.toFixed(2)}
-                    </div>
-                  )}
-                </div>
+                      }`}>
+                        {pnl >= 0 ? "+" : ""}${Math.abs(pnl).toFixed(pnl === 0 ? 0 : 1)}
+                      </span>
+                    )}
+                  </div>
+                </button>
               );
             })}
           </div>
+          
+          {/* Legend for Mobile */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 pt-3 border-t border-border-light text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded border border-blue-500 bg-blue-50"></div>
+              <span className="text-text-secondary">Profit</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded border border-red-500 bg-red-50"></div>
+              <span className="text-text-secondary">Loss</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded border border-blue-300"></div>
+              <span className="text-text-secondary">Today</span>
+            </div>
+          </div>
         </div>
 
-        {/* DAY TRADES */}
-        <div className="card p-5">
-          <h3 className="font-semibold mb-4">Day Trades</h3>
+        {/* DAY TRADES - Mobile Responsive */}
+        <div className="card p-4 sm:p-5">
+          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Day Trades</h3>
 
           {!selectedDate ? (
-            <div className="flex flex-col items-center justify-center h-60 text-text-secondary text-sm">
-              <Calendar size={36} className="mb-2 opacity-50" />
+            <div className="flex flex-col items-center justify-center h-48 sm:h-60 text-text-secondary text-xs sm:text-sm">
+              {/* Fixed line - removed the sm:size prop */}
+              <Calendar className="w-7 h-7 sm:w-9 sm:h-9 mb-2 opacity-50" />
               Click on a day with trades to view details
             </div>
           ) : (
@@ -322,36 +368,56 @@ export default function Dashboard() {
                 {new Date(selectedDate).toDateString()}
               </p>
 
-              <div className="space-y-3 max-h-80 overflow-auto">
+              <div className="space-y-3 max-h-64 sm:max-h-80 overflow-auto pr-2">
                 {dailyTrades[selectedDate].map((t, i) => (
                   <div
                     key={i}
-                    className="rounded-xl border p-4"
+                    className="rounded-xl border p-3 sm:p-4 hover:border-primary transition-colors"
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="font-semibold">
-                        Trade #{i + 1} · {t.symbol}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-2">
+                      <p className="font-semibold text-sm">
+                        Trade #{i + 1} · <span className="text-primary">{t.symbol}</span>
                       </p>
-                      <p
-                        className={`font-semibold text-lg ${
-                          t.pnl >= 0
-                            ? "text-blue-600"
-                            : "text-red-500"
-                        }`}
-                      >
-                        {t.pnl >= 0 ? "+" : ""}${t.pnl.toFixed(2)}
+                      <p className={`font-semibold text-base sm:text-lg ${
+                        t.pnl >= 0
+                          ? "text-blue-600"
+                          : "text-red-500"
+                      }`}>
+                        {t.pnl >= 0 ? "+" : ""}{formatCurrency(t.pnl)}
                       </p>
                     </div>
 
-                    <p className="text-xs text-text-secondary">
-                      Status: {t.status}
-                    </p>
-                    <p className="text-xs text-text-secondary">
-                      Time:{" "}
-                      {new Date(t.entryDate).toLocaleTimeString()}
-                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
+                      <span className={`px-2 py-1 rounded-full ${
+                        t.status === "CLOSED"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {t.status}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        {new Date(t.entryDate).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </span>
+                    </div>
                   </div>
                 ))}
+                
+                {/* Daily Summary */}
+                <div className="p-3 bg-border-light rounded-lg">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-text-secondary">Daily Total</span>
+                    <span className={`font-semibold ${
+                      dailyTrades[selectedDate].reduce((sum, t) => sum + t.pnl, 0) >= 0
+                        ? "text-blue-600"
+                        : "text-red-500"
+                    }`}>
+                      {formatCurrency(dailyTrades[selectedDate].reduce((sum, t) => sum + t.pnl, 0))}
+                    </span>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -359,42 +425,56 @@ export default function Dashboard() {
       </section>
 
       {/* =====================
-          TOP PERFORMANCE
+          TOP PERFORMANCE - Mobile Responsive
       ===================== */}
-      <section className="card p-5 mt-6">
-        <h3 className="font-semibold mb-3">Top Performance</h3>
+      <section className="card p-4 sm:p-5 mt-4 sm:mt-6">
+        <h3 className="font-semibold text-sm sm:text-base mb-3">Top Performance</h3>
 
         {bestTradeObj ? (
-          <div className="rounded-lg bg-green-500/10 p-4">
-            <p className="text-sm text-text-secondary">Best Trade</p>
-            <p className="text-xl font-semibold text-green-500">
-              +${bestTradeObj.pnl.toFixed(2)}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {new Date(bestTradeObj.entryDate).toDateString()}
-            </p>
+          <div className="rounded-lg bg-green-500/10 p-3 sm:p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-xs sm:text-sm text-text-secondary">Best Trade</p>
+                <p className="text-lg sm:text-xl font-semibold text-green-500">
+                  +{formatCurrency(bestTradeObj.pnl)}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <p className="text-xs text-text-secondary">
+                    {new Date(bestTradeObj.entryDate).toDateString()}
+                  </p>
+                  <p className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                    {bestTradeObj.symbol}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          <p className="text-sm text-text-secondary">
+          <p className="text-sm text-text-secondary text-center py-4">
             No trades yet
           </p>
         )}
       </section>
 
       {/* =====================
-          QUICK STATS
+          QUICK STATS - Mobile Responsive
       ===================== */}
-      <section className="card p-5 mt-6">
-        <h3 className="font-semibold mb-4">Quick Stats</h3>
+      <section className="card p-4 sm:p-5 mt-4 sm:mt-6">
+        <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Quick Stats</h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-2 xs:grid-cols-4 gap-2 sm:gap-4 text-sm">
           <QuickStat label="Total Trades" value={closedTrades.length} />
           <QuickStat label="Winning Trades" value={winningTrades.length} />
           <QuickStat label="Losing Trades" value={losingTrades.length} />
           <QuickStat label="Profit Factor" value={profitFactor ?? "--"} />
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
@@ -403,9 +483,9 @@ export default function Dashboard() {
 ===================== */
 function QuickStat({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-lg bg-border-light p-4 text-center">
+    <div className="rounded-lg bg-border-light p-3 sm:p-4 text-center">
       <p className="text-xs text-text-secondary">{label}</p>
-      <p className="font-semibold text-lg">{value}</p>
+      <p className="font-semibold text-base sm:text-lg">{value}</p>
     </div>
   );
 }
