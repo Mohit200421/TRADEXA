@@ -41,16 +41,16 @@ export default function TradeDetails() {
       {/* BACK */}
       <button
         onClick={() => navigate("/trades")}
-        className="flex items-center gap-2 text-sm text-text-secondary hover:text-text"
+        className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 transition-colors"
       >
         <ArrowLeft size={16} />
         Back to Trades
       </button>
 
       {/* HEADER */}
-      <div className="card p-6 space-y-6">
+      <div className="bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
             {trade.symbol}
           </h1>
 
@@ -58,8 +58,8 @@ export default function TradeDetails() {
             className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium
               ${
                 isProfit
-                  ? "bg-blue-500/10 text-blue-600"
-                  : "bg-red-500/10 text-red-500"
+                  ? "bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                  : "bg-red-500/10 dark:bg-red-500/20 text-red-500 dark:text-red-400"
               }`}
           >
             {isProfit ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
@@ -97,7 +97,7 @@ export default function TradeDetails() {
               {j.tags.split(",").map((t: string, i: number) => (
                 <span
                   key={i}
-                  className="px-3 py-1 rounded-full text-xs bg-border-light"
+                  className="px-3 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 >
                   {t.trim()}
                 </span>
@@ -117,7 +117,7 @@ export default function TradeDetails() {
                 .map(([k]) => (
                   <span
                     key={k}
-                    className="px-3 py-1 rounded-full text-xs bg-blue-500/10 text-blue-600"
+                    className="px-3 py-1 rounded-full text-xs bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400"
                   >
                     {k}
                   </span>
@@ -137,7 +137,7 @@ export default function TradeDetails() {
                   src={url}
                   alt={`Trade screenshot ${i + 1}`}
                   loading="lazy"
-                  className="rounded-xl border border-border object-cover w-full h-40 hover:scale-[1.02] transition"
+                  className="rounded-xl border border-gray-200 dark:border-gray-800 object-cover w-full h-40 hover:scale-[1.02] transition"
                 />
               ))}
             </div>
@@ -166,15 +166,15 @@ function Stat({
   positive?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border p-4 text-sm">
-      <p className="text-xs text-text-secondary mb-1">{label}</p>
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-4 text-sm">
+      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{label}</p>
       <p
         className={`font-semibold ${
           highlight
             ? positive
-              ? "text-blue-600"
-              : "text-red-500"
-            : ""
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-red-500 dark:text-red-400"
+            : "text-gray-900 dark:text-white"
         }`}
       >
         {value}
@@ -185,11 +185,11 @@ function Stat({
 
 function JournalCard({ title, children }: any) {
   return (
-    <div className="rounded-xl border border-border p-5">
-      <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-5">
+      <h4 className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-2">
         {title}
       </h4>
-      <p className="text-sm leading-relaxed">
+      <p className="text-sm leading-relaxed text-gray-900 dark:text-gray-300">
         {children || "—"}
       </p>
     </div>
@@ -199,7 +199,7 @@ function JournalCard({ title, children }: any) {
 function Section({ title, children }: any) {
   return (
     <div>
-      <h4 className="text-xs font-semibold uppercase text-text-secondary mb-2">
+      <h4 className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-400 mb-2">
         {title}
       </h4>
       {children}
@@ -208,5 +208,5 @@ function Section({ title, children }: any) {
 }
 
 function Muted({ children }: any) {
-  return <p className="text-sm text-text-secondary">{children}</p>;
+  return <p className="text-sm text-gray-600 dark:text-gray-400">{children}</p>;
 }

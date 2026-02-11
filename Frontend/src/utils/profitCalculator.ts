@@ -1,8 +1,10 @@
 /**
- * Universal Trading Profit Calculator (Frontend)
- * Matches backend pnlCalculator EXACTLY
+ * Universal Trading Profit Calculator
  * Account currency: USD
+ * Fully corrected & stable version
  */
+
+export type TradeDirection = "BUY" | "SELL";
 
 export const INSTRUMENTS: Record<
   string,
@@ -22,7 +24,7 @@ export const INSTRUMENTS: Record<
   GBPJPY: { pipSize: 0.01, contractSize: 100000 },
 
   // ---------- METALS ----------
-  XAUUSD: { pipSize: 0.01, contractSize: 100 },
+  XAUUSD: { pipSize: 0.1, contractSize: 100 },   // 1 pip = 0.1
   XAGUSD: { pipSize: 0.01, contractSize: 5000 },
 
   // ---------- CRYPTO ----------
@@ -32,13 +34,13 @@ export const INSTRUMENTS: Record<
 
 export function calculateProfit({
   symbol,
-  type, // LONG / SHORT
+  type,
   entryPrice,
   exitPrice,
   lotSize,
 }: {
   symbol: string;
-  type: "LONG" | "SHORT";
+  type: TradeDirection;
   entryPrice: number;
   exitPrice: number;
   lotSize: number;
@@ -49,43 +51,46 @@ export function calculateProfit({
     throw new Error(`Unsupported symbol: ${symbol}`);
   }
 
+  if (
+    isNaN(entryPrice) ||
+    isNaN(exitPrice) ||
+    isNaN(lotSize) ||
+    entryPrice <= 0 ||
+    exitPrice <= 0 ||
+    lotSize <= 0
+  ) {
+    throw new Error("Invalid trade values");
+  }
+
   const { pipSize, contractSize } = instrument;
 
-  // --------------------
-  // PRICE DIFFERENCE
-  // --------------------
+  // ---------------------------------
+  // PRICE DIFFERENCE (BASED ON TYPE)
+  // ---------------------------------
   const priceDiff =
-    type === "LONG"
+    type === "BUY"
       ? exitPrice - entryPrice
       : entryPrice - exitPrice;
 
-  // --------------------
-  // PIPS
-  // --------------------
-  const pips = priceDiff / pipSize;
+  // ---------------------------------
+  // PIPS (always positive number)
+  // ---------------------------------
+  const pips = Math.abs(priceDiff / pipSize);
 
-  // --------------------
-  // PIP VALUE (USD)
-  // --------------------
-  let pipValue: number;
+  // ---------------------------------
+  // PnL Calculation
+  // Formula:
+  // price difference × contract size × lot size
+  // ---------------------------------
+  let pnl = priceDiff * contractSize * lotSize;
 
-  // USD quoted (EURUSD, XAUUSD, BTCUSD)
-  if (symbol.endsWith("USD")) {
-    pipValue = pipSize * contractSize * lotSize;
+  // ---------------------------------
+  // Convert non-USD quoted pairs to USD
+  // (EURGBP, EURJPY, etc.)
+  // ---------------------------------
+  if (!symbol.endsWith("USD")) {
+    pnl = pnl / exitPrice;
   }
-  // USD base (USDJPY)
-  else if (symbol.startsWith("USD")) {
-    pipValue = (pipSize * contractSize * lotSize) / exitPrice;
-  }
-  // Cross pairs (EURJPY, GBPJPY)
-  else {
-    pipValue = (pipSize * contractSize * lotSize) / exitPrice;
-  }
-
-  // --------------------
-  // PROFIT / LOSS
-  // --------------------
-  const pnl = pips * pipValue;
 
   return {
     symbol,
@@ -94,7 +99,6 @@ export function calculateProfit({
     exitPrice,
     lotSize,
     pips: Number(pips.toFixed(2)),
-    pipValue: Number(pipValue.toFixed(4)),
     pnl: Number(pnl.toFixed(2)),
   };
 }

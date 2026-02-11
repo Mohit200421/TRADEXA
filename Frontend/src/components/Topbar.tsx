@@ -12,10 +12,8 @@ import {
   Moon,
   Clock,
   LucideIcon,
-  Menu,
-  Search,
-  TrendingUp,
   Globe,
+  Menu,
 } from "lucide-react";
 
 import { useAuth } from "../contexts/AuthContext";
@@ -24,7 +22,7 @@ import defaultAvatar from "../assets/default-avatar.svg";
 
 interface TopbarProps {
   collapsed: boolean;
-  onMenuClick?: () => void; // New prop for mobile menu toggle
+  onToggleSidebar?: () => void;
 }
 
 /* =========================
@@ -38,6 +36,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/market": "Market",
   "/community": "Community",
   "/tools": "Tools",
+  "/tools/profit-calculator": "Profit Calculator",
+  "/tools/position-size": "Position Size Calculator",
   "/profile": "Profile",
 };
 
@@ -45,7 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
    TIME ZONES
 ========================= */
 const TIME_ZONES = [
-  { label: "UTC +5:30 Kolkata ", value: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  { label: "UTC +5:30 Kolkata", value: Intl.DateTimeFormat().resolvedOptions().timeZone },
   { label: "UTC", value: "UTC" },
   { label: "New York", value: "America/New_York" },
   { label: "London", value: "Europe/London" },
@@ -55,22 +55,21 @@ const TIME_ZONES = [
   { label: "Sydney", value: "Australia/Sydney" },
 ];
 
-export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
+export default function Topbar({ collapsed, onToggleSidebar }: TopbarProps) {
   const { logout, user } = useAuth();
   const { profile } = useProfile();
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(false);
 
   const [time, setTime] = useState<Date>(new Date());
   const [timezone, setTimezone] = useState<string>(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
 
-  const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [tzOpen, setTzOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   const [dark, setDark] = useState(
     document.documentElement.classList.contains("dark")
@@ -78,73 +77,64 @@ export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const tzRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
-  /* =========================
-     CHECK MOBILE ON MOUNT
-  ========================= */
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
+  const getPageTitle = () => {
+    const currentPath = location.pathname;
+  
+    // Sort routes by length (longest first)
+    const sortedRoutes = Object.keys(PAGE_TITLES).sort(
+      (a, b) => b.length - a.length
+    );
+  
+    const matchedRoute = sortedRoutes.find((route) =>
+      currentPath.startsWith(route)
+    );
+  
+    return matchedRoute ? PAGE_TITLES[matchedRoute] : "Dashboard";
+  };
+  
+  const pageTitle = getPageTitle();
+  
+  
 
-  /* =========================
-     PAGE TITLE
-  ========================= */
-  const pageTitle = PAGE_TITLES[location.pathname] || "Dashboard";
-
-  /* =========================
-     CLOCK (TIMEZONE AWARE)
-  ========================= */
+  /* Clock */
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const formattedTime = new Intl.DateTimeFormat("en-US", {
+  const formattedTimeWithSeconds = new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     timeZone: timezone,
   }).format(time);
 
-  /* =========================
-     CLOSE DROPDOWNS
-  ========================= */
+  /* Close dropdowns on outside click */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-      if (tzRef.current && !tzRef.current.contains(e.target as Node)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setProfileOpen(false);
+
+      if (tzRef.current && !tzRef.current.contains(e.target as Node))
         setTzOpen(false);
-      }
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchOpen(false);
-      }
+
+      if (notificationRef.current && !notificationRef.current.contains(e.target as Node))
+        setNotificationOpen(false);
     };
+
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  /* =========================
-     THEME TOGGLE
-  ========================= */
+  /* Theme toggle */
   const toggleTheme = () => {
     const root = document.documentElement;
     root.classList.toggle("dark");
     setDark(root.classList.contains("dark"));
   };
 
-  /* =========================
-     LOGOUT
-  ========================= */
   const handleLogout = async () => {
     await logout();
     navigate("/", { replace: true });
@@ -153,43 +143,45 @@ export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
   const avatarUrl =
     profile?.avatar?.url || user?.avatar || defaultAvatar;
 
-  const activeTimezoneLabel =
-    TIME_ZONES.find((t) => t.value === timezone)?.label || timezone;
-
   return (
     <header
-      className={`fixed top-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800
-        flex items-center justify-between px-4 md:px-6 z-40
+      className={`fixed top-0 right-0 h-14 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-800
+        flex items-center justify-between px-4 z-40
         transition-all duration-300
-        ${isMobile ? 'left-0' : collapsed ? "left-20" : "left-64"}
+        ${collapsed ? "left-0 md:left-20" : "left-0 md:left-64"}
+        w-full md:w-auto md:right-0
       `}
     >
-      {/* LEFT SECTION */}
+      {/* LEFT SECTION - Mobile optimized */}
       <div className="flex items-center gap-3">
-        {/* Mobile Menu Button */}
-        {isMobile && (
+        {/* Mobile Hamburger Menu */}
+        {onToggleSidebar && (
           <button
-            onClick={onMenuClick}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            onClick={onToggleSidebar}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors md:hidden"
+            aria-label="Toggle sidebar"
           >
-            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         )}
 
-        {/* Logo (Mobile) */}
-        {isMobile && (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-gray-900 dark:text-white text-sm hidden sm:inline">
+        {/* Mobile App Logo & Title */}
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="w-7 h-7 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-sm">T</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight">
               TRADEXA
             </span>
+            <h1 className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+              {pageTitle}
+            </h1>
           </div>
-        )}
+        </div>
 
-        {/* Page Title */}
-        <div className={`${isMobile ? 'hidden sm:block' : ''}`}>
+        {/* Desktop Page Title */}
+        <div className="hidden md:block">
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
             {pageTitle}
           </h1>
@@ -203,187 +195,149 @@ export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
         </div>
       </div>
 
-      {/* RIGHT SECTION */}
+      {/* RIGHT SECTION - Compact for mobile */}
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Search Button (Mobile) */}
-        {isMobile && (
-          <div className="relative" ref={searchRef}>
-            <button
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <Search className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            
-            {searchOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2">
-                <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 rounded">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search trades, markets, tools..."
-                    className="w-full bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400"
-                    autoFocus
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+          aria-label="Toggle theme"
         >
           {dark ? (
             <Sun className="w-5 h-5 text-yellow-500" />
           ) : (
-            <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <Moon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           )}
         </button>
 
-        {/* Timezone & Clock */}
-        <div className="relative hidden sm:block" ref={tzRef}>
+        {/* Desktop Timezone */}
+        <div className="hidden md:block relative" ref={tzRef}>
           <button
             onClick={() => setTzOpen(!tzOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 text-sm hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
           >
-            <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-blue-500" />
-            <span className="text-gray-700 dark:text-gray-300">{formattedTime}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 hidden lg:inline">
-              ({activeTimezoneLabel})
-            </span>
+            <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="text-gray-700 dark:text-gray-300">{formattedTimeWithSeconds}</span>
             <Globe className="w-3 h-3 text-gray-400" />
           </button>
 
           {tzOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-2 text-sm z-50">
-              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Select Timezone</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg py-2 z-50">
+              <div className="px-3 py-2 mb-1 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Select Timezone</p>
               </div>
-              <div className="max-h-60 overflow-y-auto">
-                {TIME_ZONES.map((tz) => (
-                  <button
-                    key={tz.value}
-                    onClick={() => {
-                      setTimezone(tz.value);
-                      setTzOpen(false);
-                    }}
-                    className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between ${
-                      timezone === tz.value
-                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                        : "text-gray-700 dark:text-gray-300"
-                    }`}
-                  >
-                    <span>{tz.label}</span>
-                    {timezone === tz.value && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    )}
-                  </button>
-                ))}
+              {TIME_ZONES.map((tz) => (
+                <button
+                  key={tz.value}
+                  onClick={() => {
+                    setTimezone(tz.value);
+                    setTzOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-900 ${
+                    timezone === tz.value
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-gray-900"
+                      : "text-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {tz.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div className="relative" ref={notificationRef}>
+          <button
+            onClick={() => setNotificationOpen(!notificationOpen)}
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors relative"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              3
+            </span>
+          </button>
+
+          {notificationOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Notifications
+                </h3>
+              </div>
+
+              <div className="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+                <NotificationItem
+                  title="Trade Closed"
+                  message="EURUSD hit Take Profit 🎯"
+                  time="2 min ago"
+                />
+                <NotificationItem
+                  title="Risk Alert"
+                  message="You exceeded daily risk limit."
+                  time="10 min ago"
+                />
+                <NotificationItem
+                  title="Market Update"
+                  message="Gold volatility increased."
+                  time="1 hr ago"
+                />
+              </div>
+
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-black">
+                <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium w-full text-center">
+                  View all notifications
+                </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Notification */}
-        <div className="relative">
-          <button
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </button>
-        </div>
-
-        {/* Profile Dropdown */}
+        {/* Profile */}
         <div className="relative" ref={dropdownRef}>
           <button
-            onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="p-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900"
+            aria-label="Profile menu"
           >
-            <div className="relative">
+            <div className="flex items-center gap-2">
               <img
                 src={avatarUrl}
                 alt="User avatar"
-                className="w-8 h-8 rounded-full object-cover border-2 border-transparent group-hover:border-blue-500 transition-colors"
+                className="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover border-2 border-transparent hover:border-blue-500 transition-colors"
               />
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+              <ChevronDown className="hidden md:block w-4 h-4 text-gray-400 dark:text-gray-300" />
             </div>
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
           </button>
 
-          {open && (
-            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
-              {/* User Info */}
-              <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+          {profileOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                   <img
                     src={avatarUrl}
                     alt="User avatar"
-                    className="w-12 h-12 rounded-full object-cover"
+                    className="w-10 h-10 rounded-full object-cover"
                   />
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-white truncate">
                       {profile?.fullName || user?.name || "Trader"}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {user?.email}
                     </p>
-                    <div className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-xs rounded-full">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>Pro Account</span>
-                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Menu Items */}
-              <div className="py-2 space-y-1">
-                <MenuItem
-                  icon={User}
-                  label="My Profile"
-                  onClick={() => {
-                    navigate("/profile");
-                    setOpen(false);
-                  }}
-                />
-                <MenuItem
-                  icon={Settings}
-                  label="Settings"
-                  onClick={() => {
-                    navigate("/settings");
-                    setOpen(false);
-                  }}
-                />
-                <MenuItem
-                  icon={CreditCard}
-                  label="Subscription"
-                  onClick={() => {
-                    navigate("/subscription");
-                    setOpen(false);
-                  }}
-                />
-                <MenuItem
-                  icon={HelpCircle}
-                  label="Help & Support"
-                  onClick={() => {
-                    navigate("/help");
-                    setOpen(false);
-                  }}
-                />
-                <div className="h-px bg-gray-100 dark:bg-gray-700 my-2"></div>
-                <MenuItem
-                  icon={LogOut}
-                  label="Sign Out"
-                  danger
-                  onClick={handleLogout}
-                />
+              <div className="py-2">
+                <MenuItem icon={User} label="My Profile" onClick={() => navigate("/profile")} />
+                <MenuItem icon={Settings} label="Settings" onClick={() => navigate("/settings")} />
+                <MenuItem icon={CreditCard} label="Subscription" onClick={() => navigate("/subscription")} />
+                <MenuItem icon={HelpCircle} label="Help & Support" onClick={() => navigate("/help")} />
+                <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>
+                <MenuItem icon={LogOut} label="Sign Out" danger onClick={handleLogout} />
               </div>
             </div>
           )}
@@ -394,8 +348,9 @@ export default function Topbar({ collapsed, onMenuClick }: TopbarProps) {
 }
 
 /* =========================
-   MENU ITEM COMPONENT
+   COMPONENTS
 ========================= */
+
 function MenuItem({
   icon: Icon,
   label,
@@ -410,15 +365,42 @@ function MenuItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors
-        ${
-          danger
-            ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:text-red-400"
-            : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-        }`}
+      className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+        danger
+          ? "text-red-600 hover:bg-red-50 dark:hover:bg-gray-900"
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900"
+      }`}
     >
-      <Icon className={`w-4 h-4 ${danger ? '' : 'text-gray-500 dark:text-gray-400'}`} />
+      <Icon className="w-4 h-4" />
       {label}
     </button>
+  );
+}
+
+function NotificationItem({
+  title,
+  message,
+  time,
+}: {
+  title: string;
+  message: string;
+  time: string;
+}) {
+  return (
+    <div className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer">
+      <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+              {title}
+            </p>
+            <span className="shrink-0 text-[11px] text-gray-500 dark:text-gray-400">{time}</span>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+            {message}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -123,8 +123,8 @@ export default function Tools() {
 /* ================= STAT BOX COMPONENT ================= */
 function StatBox({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex-1 min-w-[100px] sm:min-w-[120px] bg-white dark:bg-gray-800 
-                  border border-gray-200 dark:border-gray-700 rounded-lg px-3 sm:px-4 py-3 text-center">
+    <div className="flex-1 min-w-[100px] sm:min-w-[120px] bg-white dark:bg-black 
+                  border border-gray-200 dark:border-gray-800 rounded-lg px-3 sm:px-4 py-3 text-center">
       <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{value}</p>
       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{label}</p>
     </div>
@@ -152,9 +152,9 @@ function ToolCard({
   return (
     <div
       onClick={active ? onClick : undefined}
-      className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 
+      className={`bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-gray-800 
                 p-4 sm:p-5 transition-all duration-200 flex flex-col h-full
-                ${active ? "cursor-pointer hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700" : ""}
+                ${active ? "cursor-pointer hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 dark:hover:shadow-gray-900" : ""}
                 ${comingSoon ? "opacity-70" : ""}
       `}
     >
@@ -162,7 +162,7 @@ function ToolCard({
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div className={`p-2.5 rounded-lg ${
           comingSoon 
-            ? "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400" 
+            ? "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400" 
             : "bg-gradient-to-br from-blue-100 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 text-blue-600 dark:text-blue-400"
         }`}>
           {icon}
@@ -177,7 +177,7 @@ function ToolCard({
 
         {comingSoon && (
           <span className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium 
-                         bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                         bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
             COMING SOON
           </span>
         )}
@@ -203,7 +203,7 @@ function ToolCard({
       </div>
 
       {/* Footer */}
-      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700">
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-800">
         {active ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1 group">
@@ -218,7 +218,7 @@ function ToolCard({
               <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
               In Development
             </span>
-            <span className="text-xs text-gray-400">Q2 2024</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">Q2 2024</span>
           </div>
         )}
       </div>
@@ -233,9 +233,9 @@ function ComingSoonCard({ icon, title, description }: {
   description: string;
 }) {
   return (
-    <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 
+    <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
                   rounded-lg p-3 sm:p-4 flex items-center gap-3">
-      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-700 
+      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gray-100 dark:bg-gray-800 
                     flex items-center justify-center text-gray-500 dark:text-gray-400">
         {icon}
       </div>

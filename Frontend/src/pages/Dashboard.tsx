@@ -143,8 +143,8 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-          <p className="text-text-secondary">Loading dashboard...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3 dark:text-blue-400" />
+          <p className="text-text-secondary dark:text-gray-400">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -157,56 +157,56 @@ export default function Dashboard() {
       ===================== */}
       <section className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {/* TOTAL P&L */}
-        <div className="card p-4 sm:p-5 relative">
-          <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 font-medium">
+        <div className="card p-4 sm:p-5 relative dark:bg-black dark:border-gray-800">
+          <span className="absolute top-3 right-3 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600 font-medium dark:bg-blue-900 dark:text-blue-300">
             TOTAL
           </span>
 
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-3 sm:mb-4">
-            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-3 sm:mb-4 dark:bg-blue-900">
+            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
           </div>
 
-          <p className="text-xs sm:text-sm text-text-secondary">TOTAL P&amp;L</p>
+          <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">TOTAL P&amp;L</p>
           <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${
-            totalPnL >= 0 ? "text-blue-600" : "text-red-500"
+            totalPnL >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-500 dark:text-red-400"
           }`}>
             {totalPnL >= 0 ? "+" : ""}{formatCurrency(totalPnL)}
           </p>
 
-          <p className="text-xs sm:text-sm text-text-secondary mt-2">
+          <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400 mt-2">
             → {closedTrades.length} trades
           </p>
         </div>
 
         {/* WIN RATE */}
-        <div className="card p-4 sm:p-5">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-3 sm:mb-4">
-            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+        <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-3 sm:mb-4 dark:bg-purple-900">
+            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
           </div>
 
-          <p className="text-xs sm:text-sm text-text-secondary">WIN RATE</p>
-          <p className="text-xl sm:text-2xl lg:text-3xl font-bold">{winRate}%</p>
+          <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">WIN RATE</p>
+          <p className="text-xl sm:text-2xl lg:text-3xl font-bold dark:text-white">{winRate}%</p>
 
-          <div className="w-full h-2 bg-border-light rounded-full mt-3">
+          <div className="w-full h-2 bg-border-light rounded-full mt-3 dark:bg-gray-800">
             <div
-              className="h-2 bg-blue-500 rounded-full transition-all duration-500"
+              className="h-2 bg-blue-500 rounded-full transition-all duration-500 dark:bg-blue-400"
               style={{ width: `${winRate}%` }}
             />
           </div>
         </div>
 
         {/* PROFIT FACTOR */}
-        <div className="card p-4 sm:p-5 col-span-1 xs:col-span-2 lg:col-span-1">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-3 sm:mb-4">
-            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+        <div className="card p-4 sm:p-5 col-span-1 xs:col-span-2 lg:col-span-1 dark:bg-black dark:border-gray-800">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-3 sm:mb-4 dark:bg-green-900">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
           </div>
 
-          <p className="text-xs sm:text-sm text-text-secondary">PROFIT FACTOR</p>
-          <p className="text-xl sm:text-2xl lg:text-3xl font-bold">
+          <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">PROFIT FACTOR</p>
+          <p className="text-xl sm:text-2xl lg:text-3xl font-bold dark:text-white">
             {profitFactor ?? "--"}
           </p>
 
-          <p className="text-xs text-text-secondary mt-2">
+          <p className="text-xs text-text-secondary dark:text-gray-400 mt-2">
             Higher is better
           </p>
         </div>
@@ -217,13 +217,13 @@ export default function Dashboard() {
       ===================== */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
         {/* CALENDAR */}
-        <div className="lg:col-span-2 card p-4 sm:p-5">
+        <div className="lg:col-span-2 card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 dark:text-gray-300" />
               <div>
-                <h3 className="font-semibold text-sm sm:text-base">Trading Calendar</h3>
-                <p className="text-xs text-text-secondary">
+                <h3 className="font-semibold text-sm sm:text-base dark:text-white">Trading Calendar</h3>
+                <p className="text-xs text-text-secondary dark:text-gray-400">
                   Daily P&amp;L heatmap – Click on days to see trades
                 </p>
               </div>
@@ -231,7 +231,7 @@ export default function Dashboard() {
 
             <div className="flex items-center justify-between sm:justify-start gap-3">
               <button
-                className="w-8 h-8 rounded-md bg-border-light hover:bg-border flex items-center justify-center"
+                className="w-8 h-8 rounded-md bg-border-light hover:bg-border flex items-center justify-center dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                 onClick={() =>
                   setCurrentMonth(
                     new Date(
@@ -242,10 +242,10 @@ export default function Dashboard() {
                   )
                 }
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 dark:text-gray-300" />
               </button>
 
-              <span className="font-medium text-sm min-w-[120px] text-center">
+              <span className="font-medium text-sm min-w-[120px] text-center dark:text-white">
                 {currentMonth.toLocaleString("default", {
                   month: "short",
                   year: "numeric",
@@ -253,7 +253,7 @@ export default function Dashboard() {
               </span>
 
               <button
-                className="w-8 h-8 rounded-md bg-border-light hover:bg-border flex items-center justify-center"
+                className="w-8 h-8 rounded-md bg-border-light hover:bg-border flex items-center justify-center dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                 onClick={() =>
                   setCurrentMonth(
                     new Date(
@@ -264,13 +264,13 @@ export default function Dashboard() {
                   )
                 }
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 dark:text-gray-300" />
               </button>
             </div>
           </div>
 
           {/* WEEKDAYS - Mobile Responsive */}
-          <div className="grid grid-cols-7 text-[10px] xs:text-xs font-medium text-center mb-2">
+          <div className="grid grid-cols-7 text-[10px] xs:text-xs font-medium text-center mb-2 dark:text-gray-400">
             {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
               <div key={i} className="hidden xs:block">{["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"][i]}</div>
             ))}
@@ -299,32 +299,32 @@ export default function Dashboard() {
                   disabled={!tradesForDay}
                   className={`h-10 sm:h-14 md:h-16 rounded-lg border p-1 sm:p-2 transition-all duration-200
                     ${pnl === null
-                      ? "bg-bg cursor-default"
-                      : "cursor-pointer hover:shadow-md"
+                      ? "bg-bg cursor-default dark:bg-gray-900"
+                      : "cursor-pointer hover:shadow-md dark:hover:shadow-gray-800"
                     }
                     ${pnl !== null && pnl >= 0
-                      ? "border-blue-500 bg-blue-50"
+                      ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
                       : pnl !== null && pnl < 0
-                      ? "border-red-500 bg-red-50"
-                      : "border-border"
+                      ? "border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/20"
+                      : "border-border dark:border-gray-800"
                     }
                     ${selectedDate === dateKey
-                      ? "ring-2 ring-primary shadow-md"
+                      ? "ring-2 ring-primary shadow-md dark:ring-blue-500"
                       : ""
                     }
                     ${isToday
-                      ? "ring-1 ring-blue-300"
+                      ? "ring-1 ring-blue-300 dark:ring-blue-400"
                       : ""
                     }
                   `}
                 >
-                  <div className="text-xs sm:text-sm font-medium flex flex-col items-center">
-                    <span className={isToday ? "text-blue-600 font-bold" : ""}>
+                  <div className="text-xs sm:text-sm font-medium flex flex-col items-center dark:text-white">
+                    <span className={isToday ? "text-blue-600 dark:text-blue-400 font-bold" : ""}>
                       {day}
                     </span>
                     {pnl !== null && (
                       <span className={`text-[10px] xs:text-xs font-semibold mt-0.5 ${
-                        pnl >= 0 ? "text-blue-500" : "text-red-500"
+                        pnl >= 0 ? "text-blue-500 dark:text-blue-400" : "text-red-500 dark:text-red-400"
                       }`}>
                         {pnl >= 0 ? "+" : ""}${Math.abs(pnl).toFixed(pnl === 0 ? 0 : 1)}
                       </span>
@@ -336,35 +336,34 @@ export default function Dashboard() {
           </div>
           
           {/* Legend for Mobile */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 pt-3 border-t border-border-light text-xs">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 pt-3 border-t border-border-light text-xs dark:border-gray-800">
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded border border-blue-500 bg-blue-50"></div>
-              <span className="text-text-secondary">Profit</span>
+              <div className="w-3 h-3 rounded border border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"></div>
+              <span className="text-text-secondary dark:text-gray-400">Profit</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded border border-red-500 bg-red-50"></div>
-              <span className="text-text-secondary">Loss</span>
+              <div className="w-3 h-3 rounded border border-red-500 bg-red-50 dark:border-red-400 dark:bg-red-900/20"></div>
+              <span className="text-text-secondary dark:text-gray-400">Loss</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded border border-blue-300"></div>
-              <span className="text-text-secondary">Today</span>
+              <div className="w-3 h-3 rounded border border-blue-300 dark:border-blue-400"></div>
+              <span className="text-text-secondary dark:text-gray-400">Today</span>
             </div>
           </div>
         </div>
 
         {/* DAY TRADES - Mobile Responsive */}
-        <div className="card p-4 sm:p-5">
-          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Day Trades</h3>
+        <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
+          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4 dark:text-white">Day Trades</h3>
 
           {!selectedDate ? (
-            <div className="flex flex-col items-center justify-center h-48 sm:h-60 text-text-secondary text-xs sm:text-sm">
-              {/* Fixed line - removed the sm:size prop */}
-              <Calendar className="w-7 h-7 sm:w-9 sm:h-9 mb-2 opacity-50" />
+            <div className="flex flex-col items-center justify-center h-48 sm:h-60 text-text-secondary text-xs sm:text-sm dark:text-gray-400">
+              <Calendar className="w-7 h-7 sm:w-9 sm:h-9 mb-2 opacity-50 dark:text-gray-500" />
               Click on a day with trades to view details
             </div>
           ) : (
             <>
-              <p className="text-xs text-text-secondary mb-3">
+              <p className="text-xs text-text-secondary mb-3 dark:text-gray-400">
                 {new Date(selectedDate).toDateString()}
               </p>
 
@@ -372,26 +371,26 @@ export default function Dashboard() {
                 {dailyTrades[selectedDate].map((t, i) => (
                   <div
                     key={i}
-                    className="rounded-xl border p-3 sm:p-4 hover:border-primary transition-colors"
+                    className="rounded-xl border p-3 sm:p-4 hover:border-primary transition-colors dark:border-gray-800 dark:hover:border-blue-500 dark:bg-gray-900"
                   >
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0 mb-2">
-                      <p className="font-semibold text-sm">
-                        Trade #{i + 1} · <span className="text-primary">{t.symbol}</span>
+                      <p className="font-semibold text-sm dark:text-white">
+                        Trade #{i + 1} · <span className="text-primary dark:text-blue-400">{t.symbol}</span>
                       </p>
                       <p className={`font-semibold text-base sm:text-lg ${
                         t.pnl >= 0
-                          ? "text-blue-600"
-                          : "text-red-500"
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-red-500 dark:text-red-400"
                       }`}>
                         {t.pnl >= 0 ? "+" : ""}{formatCurrency(t.pnl)}
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
+                    <div className="flex flex-wrap gap-2 text-xs text-text-secondary dark:text-gray-400">
                       <span className={`px-2 py-1 rounded-full ${
                         t.status === "CLOSED"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                       }`}>
                         {t.status}
                       </span>
@@ -406,13 +405,13 @@ export default function Dashboard() {
                 ))}
                 
                 {/* Daily Summary */}
-                <div className="p-3 bg-border-light rounded-lg">
+                <div className="p-3 bg-border-light rounded-lg dark:bg-gray-800">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-text-secondary">Daily Total</span>
+                    <span className="text-text-secondary dark:text-gray-400">Daily Total</span>
                     <span className={`font-semibold ${
                       dailyTrades[selectedDate].reduce((sum, t) => sum + t.pnl, 0) >= 0
-                        ? "text-blue-600"
-                        : "text-red-500"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-red-500 dark:text-red-400"
                     }`}>
                       {formatCurrency(dailyTrades[selectedDate].reduce((sum, t) => sum + t.pnl, 0))}
                     </span>
@@ -427,35 +426,35 @@ export default function Dashboard() {
       {/* =====================
           TOP PERFORMANCE - Mobile Responsive
       ===================== */}
-      <section className="card p-4 sm:p-5 mt-4 sm:mt-6">
-        <h3 className="font-semibold text-sm sm:text-base mb-3">Top Performance</h3>
+      <section className="card p-4 sm:p-5 mt-4 sm:mt-6 dark:bg-black dark:border-gray-800">
+        <h3 className="font-semibold text-sm sm:text-base mb-3 dark:text-white">Top Performance</h3>
 
         {bestTradeObj ? (
-          <div className="rounded-lg bg-green-500/10 p-3 sm:p-4">
+          <div className="rounded-lg bg-green-500/10 p-3 sm:p-4 dark:bg-green-900/20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="text-xs sm:text-sm text-text-secondary">Best Trade</p>
-                <p className="text-lg sm:text-xl font-semibold text-green-500">
+                <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Best Trade</p>
+                <p className="text-lg sm:text-xl font-semibold text-green-500 dark:text-green-400">
                   +{formatCurrency(bestTradeObj.pnl)}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <p className="text-xs text-text-secondary">
+                  <p className="text-xs text-text-secondary dark:text-gray-400">
                     {new Date(bestTradeObj.entryDate).toDateString()}
                   </p>
-                  <p className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                  <p className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full dark:bg-blue-900/30 dark:text-blue-400">
                     {bestTradeObj.symbol}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center dark:bg-green-900">
+                  <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-text-secondary text-center py-4">
+          <p className="text-sm text-text-secondary text-center py-4 dark:text-gray-400">
             No trades yet
           </p>
         )}
@@ -464,8 +463,8 @@ export default function Dashboard() {
       {/* =====================
           QUICK STATS - Mobile Responsive
       ===================== */}
-      <section className="card p-4 sm:p-5 mt-4 sm:mt-6">
-        <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Quick Stats</h3>
+      <section className="card p-4 sm:p-5 mt-4 sm:mt-6 dark:bg-black dark:border-gray-800">
+        <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4 dark:text-white">Quick Stats</h3>
 
         <div className="grid grid-cols-2 xs:grid-cols-4 gap-2 sm:gap-4 text-sm">
           <QuickStat label="Total Trades" value={closedTrades.length} />
@@ -483,9 +482,9 @@ export default function Dashboard() {
 ===================== */
 function QuickStat({ label, value }: { label: string; value: any }) {
   return (
-    <div className="rounded-lg bg-border-light p-3 sm:p-4 text-center">
-      <p className="text-xs text-text-secondary">{label}</p>
-      <p className="font-semibold text-base sm:text-lg">{value}</p>
+    <div className="rounded-lg bg-border-light p-3 sm:p-4 text-center dark:bg-gray-800">
+      <p className="text-xs text-text-secondary dark:text-gray-400">{label}</p>
+      <p className="font-semibold text-base sm:text-lg dark:text-white">{value}</p>
     </div>
   );
 }

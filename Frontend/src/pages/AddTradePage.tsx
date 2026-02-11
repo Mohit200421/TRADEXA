@@ -99,7 +99,7 @@ export default function AddTradePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-black p-3 sm:p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* HEADER */}
         <div className="mb-6">
@@ -115,13 +115,13 @@ export default function AddTradePage() {
             {/* Progress Indicator for Mobile */}
             <div className="flex items-center gap-2 sm:hidden">
               <div className="flex items-center gap-1">
-                <div className={`w-3 h-3 rounded-full ${activeSection === "trade" ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-700"}`}></div>
-                <span className={`text-xs ${activeSection === "trade" ? "font-medium text-blue-600 dark:text-blue-400" : "text-gray-500"}`}>1</span>
+                <div className={`w-3 h-3 rounded-full ${activeSection === "trade" ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-800"}`}></div>
+                <span className={`text-xs ${activeSection === "trade" ? "font-medium text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-500"}`}>1</span>
               </div>
-              <div className="w-6 h-px bg-gray-300 dark:bg-gray-700"></div>
+              <div className="w-6 h-px bg-gray-300 dark:bg-gray-800"></div>
               <div className="flex items-center gap-1">
-                <div className={`w-3 h-3 rounded-full ${activeSection === "journal" ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-700"}`}></div>
-                <span className={`text-xs ${activeSection === "journal" ? "font-medium text-blue-600 dark:text-blue-400" : "text-gray-500"}`}>2</span>
+                <div className={`w-3 h-3 rounded-full ${activeSection === "journal" ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-800"}`}></div>
+                <span className={`text-xs ${activeSection === "journal" ? "font-medium text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-500"}`}>2</span>
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function AddTradePage() {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeSection === "trade"
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                      : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300"
                   }`}
                 >
                   Trade Details
@@ -157,7 +157,7 @@ export default function AddTradePage() {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeSection === "journal"
                       ? "bg-blue-600 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                      : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300"
                   }`}
                 >
                   Journal
@@ -178,7 +178,7 @@ export default function AddTradePage() {
         {/* MAIN CONTENT - MOBILE TABS */}
         <div className={`${activeSection === "trade" ? "block" : "hidden"} sm:block`}>
           {/* TRADE DETAILS SECTION */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 md:p-6 shadow-sm mb-6">
+          <div className="bg-white dark:bg-black rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 md:p-6 shadow-sm mb-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 flex items-center justify-center">
                 <BarChart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -201,7 +201,7 @@ export default function AddTradePage() {
                         value={trade.symbol}
                         onChange={handleTradeChange}
                         placeholder="e.g., XAUUSD, BTCUSD"
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         autoComplete="off"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-rose-500 text-sm">*</span>
@@ -213,7 +213,7 @@ export default function AddTradePage() {
                         name="type"
                         value={trade.type}
                         onChange={handleTradeChange}
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-sm"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-sm"
                         autoComplete="off"
                       >
                         <option value="LONG">LONG</option>
@@ -244,10 +244,10 @@ export default function AddTradePage() {
                       timeIntervals={15}
                       timeCaption="Time"
                       dateFormat="dd/MM/yy HH:mm"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       autoComplete="off"
                     />
-                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                   </div>
                 </div>
                 <div>
@@ -262,10 +262,10 @@ export default function AddTradePage() {
                       timeIntervals={15}
                       timeCaption="Time"
                       dateFormat="dd/MM/yy HH:mm"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       autoComplete="off"
                     />
-                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
                   </div>
                 </div>
               </div>
@@ -285,7 +285,7 @@ export default function AddTradePage() {
                         value={trade.entryPrice}
                         onChange={handleTradeChange}
                         placeholder="Enter entry price"
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         type="number"
                         step="0.01"
                         autoComplete="off"
@@ -304,7 +304,7 @@ export default function AddTradePage() {
                       value={trade.exitPrice}
                       onChange={handleTradeChange}
                       placeholder="Enter exit price"
-                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       type="number"
                       step="0.01"
                       autoComplete="off"
@@ -322,7 +322,7 @@ export default function AddTradePage() {
                         value={trade.lotSize}
                         onChange={handleTradeChange}
                         placeholder="Enter lot size"
-                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         type="number"
                         step="0.01"
                         autoComplete="off"
@@ -349,7 +349,7 @@ export default function AddTradePage() {
 
         {/* JOURNAL SECTION */}
         <div className={`${activeSection === "journal" ? "block" : "hidden"} sm:block`}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-700 p-4 sm:p-5 md:p-6 shadow-sm">
+          <div className="bg-white dark:bg-black rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 md:p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-100 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-green-600 dark:text-green-400" />
@@ -370,7 +370,7 @@ export default function AddTradePage() {
                     onChange={(e) => setJournal({ ...journal, preTrade: e.target.value })}
                     placeholder="What was your trading plan? Describe analysis and entry reasons..."
                     rows={3}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                   />
                 </div>
                 
@@ -381,7 +381,7 @@ export default function AddTradePage() {
                     onChange={(e) => setJournal({ ...journal, postTrade: e.target.value })}
                     placeholder="What actually happened? Review execution and outcomes..."
                     rows={3}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                   />
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function AddTradePage() {
                     onChange={(e) => setJournal({ ...journal, emotions: e.target.value })}
                     placeholder="How did you feel during the trade? Describe emotional state..."
                     rows={3}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                   />
                 </div>
                 
@@ -406,7 +406,7 @@ export default function AddTradePage() {
                     onChange={(e) => setJournal({ ...journal, lessons: e.target.value })}
                     placeholder="What will you do differently next time? Note key takeaways..."
                     rows={3}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                   />
                 </div>
               </div>
@@ -419,7 +419,7 @@ export default function AddTradePage() {
                     value={journal.tags}
                     onChange={(e: any) => setJournal({ ...journal, tags: e.target.value })}
                     placeholder="breakout, reversal, scalping (comma separated)"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
                 
@@ -436,9 +436,9 @@ export default function AddTradePage() {
                       max={10}
                       value={journal.rating}
                       onChange={(e) => setJournal({ ...journal, rating: Number(e.target.value) })}
-                      className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600"
+                      className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-600 dark:[&::-webkit-slider-thumb]:bg-blue-500"
                     />
-                    <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex justify-between text-xs text-gray-500 dark:text-gray-500">
                       <span>Poor</span>
                       <span>Average</span>
                       <span>Excellent</span>
@@ -464,11 +464,11 @@ export default function AddTradePage() {
                       className={`flex items-center gap-2 p-3 rounded-lg border transition-colors text-left ${
                         value
                           ? "border-green-500 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400"
-                          : "border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-400"
+                          : "border-gray-300 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-400"
                       }`}
                     >
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
-                        value ? "border-green-500 bg-green-500" : "border-gray-400 dark:border-gray-600"
+                        value ? "border-green-500 bg-green-500" : "border-gray-400 dark:border-gray-700"
                       }`}>
                         {value && <Check className="w-3 h-3 text-white" />}
                       </div>
@@ -481,7 +481,7 @@ export default function AddTradePage() {
                   <button
                     type="button"
                     onClick={() => setAddingCheckpoint(true)}
-                    className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600 rounded-lg transition-colors text-sm"
+                    className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-gray-300 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 hover:border-gray-400 dark:hover:border-gray-700 rounded-lg transition-colors text-sm"
                   >
                     <Plus className="w-4 h-4" />
                     Add Custom Checkpoint
@@ -491,7 +491,7 @@ export default function AddTradePage() {
                     <input
                       value={newCheckpoint}
                       onChange={(e) => setNewCheckpoint(e.target.value)}
-                      className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       placeholder="Enter custom checkpoint..."
                       onKeyPress={(e) => e.key === 'Enter' && addCheckpoint()}
                     />
@@ -508,7 +508,7 @@ export default function AddTradePage() {
                         setAddingCheckpoint(false);
                         setNewCheckpoint("");
                       }}
-                      className="px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg font-medium text-sm transition-colors"
+                      className="px-4 py-2.5 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-lg font-medium text-sm transition-colors"
                     >
                       Cancel
                     </button>
@@ -520,11 +520,11 @@ export default function AddTradePage() {
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block">Screenshots & Charts</label>
                 <label className="block cursor-pointer">
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-800 rounded-lg p-6 text-center hover:border-blue-500 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all">
                     <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-600 mx-auto mb-3" />
                     <div>
                       <p className="font-medium text-gray-800 dark:text-gray-300 mb-1 text-sm">Upload Charts & Screenshots</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Click to upload images (PNG, JPG)</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-500">Click to upload images (PNG, JPG)</p>
                     </div>
                     <input
                       type="file"
@@ -545,7 +545,7 @@ export default function AddTradePage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
                     {screenshots.map((file, i) => (
                       <div key={i} className="relative group">
-                        <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden">
+                        <div className="aspect-square bg-gray-100 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-800 overflow-hidden">
                           <img
                             src={URL.createObjectURL(file)}
                             alt={`Screenshot ${i + 1}`}
@@ -559,7 +559,7 @@ export default function AddTradePage() {
                         >
                           <X className="w-3 h-3" />
                         </button>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1 truncate">
                           {file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name}
                         </div>
                       </div>
@@ -578,7 +578,7 @@ export default function AddTradePage() {
             className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               activeSection === "trade"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300"
             }`}
           >
             <BarChart className="w-4 h-4" />
@@ -589,7 +589,7 @@ export default function AddTradePage() {
             className={`flex-1 px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               activeSection === "journal"
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                : "bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300"
             }`}
           >
             <BookOpen className="w-4 h-4" />
@@ -598,7 +598,7 @@ export default function AddTradePage() {
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="sticky bottom-0 mt-6 sm:mt-8 p-3 sm:p-4 bg-white dark:bg-gray-900/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800">
+        <div className="sticky bottom-0 mt-6 sm:mt-8 p-3 sm:p-4 bg-white dark:bg-black/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               {trade.symbol && (
@@ -614,7 +614,7 @@ export default function AddTradePage() {
               <button
                 type="button"
                 onClick={() => navigate("/trades")}
-                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium text-sm sm:text-base transition-colors"
+                className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg font-medium text-sm sm:text-base transition-colors"
               >
                 Cancel
               </button>
