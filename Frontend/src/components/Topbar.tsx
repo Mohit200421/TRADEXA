@@ -38,6 +38,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/tools": "Tools",
   "/tools/profit-calculator": "Profit Calculator",
   "/tools/position-size": "Position Size Calculator",
+  "/tools/forex-sessions": "Forex Market Hours",
   "/profile": "Profile",
 };
 

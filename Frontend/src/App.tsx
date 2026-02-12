@@ -34,6 +34,7 @@ import Tools from "./pages/Tools";
 
 import PositionSizeCalculator from "./tools/PositionSizeCalculator";
 import ProfitCalculator from "./tools/ProfitCalculator";
+import ForexSessions from "./tools/ForexSessions";
 
 import DashboardLayout from "./layouts/DashboardLayout";
 
@@ -112,6 +113,8 @@ export default function App() {
                 path="/tools/profit-calculator"
                 element={<ProfitCalculator />}
               />
+              <Route path="/tools/forex-sessions" element={<ForexSessions />} />
+
             </Route>
 
             {/* ================= FALLBACK ================= */}

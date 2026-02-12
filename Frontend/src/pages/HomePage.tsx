@@ -142,6 +142,33 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-500">
+      {/* Inject global styles properly */}
+      <style>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+        
+        html {
+          scroll-behavior: smooth;
+        }
+        
+        @media (max-width: 640px) {
+          button, a, [role="button"] {
+            min-height: 44px;
+            min-width: 44px;
+          }
+        }
+      `}</style>
+
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -164,17 +191,12 @@ const HomePage = () => {
         />
       </div>
 
-      {/* Navigation - NO SHADOW */}
+      {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50">
         <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
             
-            {/* LOGO DESIGNS - COMMENT/UNCOMMENT TO TEST EACH ONE */}
-            
-            {/* ============================ */}
-            {/* LOGO 1: Original Chart Design (Active) */}
-            {/* ============================ */}
-            
+            {/* Logo */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -198,189 +220,7 @@ const HomePage = () => {
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Trading Journal</span>
               </div>
-            </motion.div> 
-
-            {/* ============================ */}
-            {/* LOGO 2: Abstract Graph + A Design */}
-            {/* ============================ */}
-            {/*
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center overflow-hidden">
-                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} 
-                      d="M3 12l3-6 3 6 3-6 3 6 3-6M3 18l3-6 3 6 3-6 3 6 3-6" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} 
-                      d="M6 13.5h12" />
-                  </svg>
-                </div>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-1 border border-blue-500/20 rounded-lg"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-300 bg-clip-text text-transparent">
-                  TradeXA
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Analytics & Journal</span>
-              </div>
             </motion.div>
-            */}
-
-            {/* ============================ */}
-            {/* LOGO 3: Modern Data Cube Design */}
-            {/* ============================ */}
-            {/*
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-500 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" fillOpacity="0.9" />
-                    <path d="M2 7L12 12V22L2 17V7Z" fill="white" fillOpacity="0.7" />
-                    <path d="M12 12L22 7V17L12 22V12Z" fill="white" fillOpacity="0.5" />
-                    <circle cx="7" cy="9" r="1" fill="#60A5FA" />
-                    <circle cx="12" cy="7" r="1" fill="#60A5FA" />
-                    <circle cx="17" cy="9" r="1" fill="#60A5FA" />
-                    <circle cx="9" cy="14" r="1" fill="#60A5FA" />
-                    <circle cx="15" cy="14" r="1" fill="#60A5FA" />
-                  </svg>
-                </div>
-                <motion.div
-                  animate={{ rotateY: 360 }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-0.5 border border-indigo-500/20 rounded-xl"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-500 dark:from-indigo-400 dark:to-purple-300 bg-clip-text text-transparent">
-                  TradeXA
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Data-Driven Trading</span>
-              </div>
-            </motion.div>
-            */}
-
-            {/* ============================ */}
-            {/* LOGO 4: Minimal Wave + Dot Design */}
-            {/* ============================ */}
-            {/*
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-600 to-teal-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                      d="M3 15C3 15 6 9 12 9C18 9 21 15 21 15" />
-                    <circle cx="12" cy="15" r="2" fill="white" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                      d="M3 9L6 7L9 9L12 7L15 9L18 7L21 9" strokeDasharray="2 2" />
-                  </svg>
-                </div>
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute -inset-1 border border-emerald-500/30 rounded-lg"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
-                  TradeXA
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Performance Analytics</span>
-              </div>
-            </motion.div>
-            */}
-
-            {/* ============================ */}
-            {/* LOGO 5: Diamond/Crystal Design (Premium Feel) */}
-            {/* ============================ */}
-            {/*
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-lg flex items-center justify-center overflow-hidden">
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24">
-                    <polygon points="12,2 22,12 12,22 2,12" fill="white" fillOpacity="0.9" />
-                    <path d="M12 2L12 22" stroke="white" strokeWidth="1" strokeOpacity="0.6" />
-                    <path d="M2 12L22 12" stroke="white" strokeWidth="1" strokeOpacity="0.6" />
-                    <path d="M4 4L20 20" stroke="white" strokeWidth="0.8" strokeOpacity="0.4" />
-                    <path d="M4 20L20 4" stroke="white" strokeWidth="0.8" strokeOpacity="0.4" />
-                    <circle cx="12" cy="7" r="0.5" fill="#A78BFA" />
-                    <circle cx="7" cy="12" r="0.5" fill="#A78BFA" />
-                    <circle cx="17" cy="12" r="0.5" fill="#A78BFA" />
-                    <circle cx="12" cy="17" r="0.5" fill="#A78BFA" />
-                  </svg>
-                </div>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                  className="absolute -inset-1 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 rounded-lg blur-sm"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-500 dark:from-violet-400 dark:to-fuchsia-300 bg-clip-text text-transparent">
-                  TradeXA
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Precision Trading</span>
-              </div>
-            </motion.div>
-            */}
-
-            {/* ============================ */}
-            {/* LOGO 6: Line Chart + X Mark Design */}
-            {/* ============================ */}
-            {/*
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex items-center space-x-2"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-600 to-orange-500 rounded-lg flex items-center justify-center">
-                  <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                      d="M6 18L18 6" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} 
-                      d="M6 6L18 18" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M19 14L21 12L19 10" />
-                    <circle cx="6" cy="6" r="1.5" fill="white" />
-                    <circle cx="18" cy="6" r="1.5" fill="white" />
-                    <circle cx="6" cy="18" r="1.5" fill="white" />
-                    <circle cx="18" cy="18" r="1.5" fill="white" />
-                    <circle cx="12" cy="12" r="1.5" fill="#FBBF24" />
-                  </svg>
-                </div>
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="absolute -inset-1 border border-amber-500/30 rounded-lg"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-amber-600 to-orange-500 dark:from-amber-400 dark:to-orange-300 bg-clip-text text-transparent">
-                  TradeXA
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Cross-Asset Analytics</span>
-              </div>
-            </motion.div>
-            */}
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
@@ -420,9 +260,7 @@ const HomePage = () => {
                   )}
                 </motion.button>
                 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                >
+                <motion.div whileHover={{ scale: 1.05 }}>
                   <Link 
                     to="/login" 
                     className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -431,10 +269,7 @@ const HomePage = () => {
                   </Link>
                 </motion.div>
                 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link 
                     to="/register" 
                     className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
@@ -569,10 +404,7 @@ const HomePage = () => {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
             >
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
                   to="/register" 
                   className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:opacity-90 transition-all group"
@@ -582,15 +414,12 @@ const HomePage = () => {
                 </Link>
               </motion.div>
               
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link 
                   to="/login" 
                   className="inline-flex items-center justify-center px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-xl hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
                 >
-                  Log in  to Dashboard
+                  Log in to Dashboard
                 </Link>
               </motion.div>
             </motion.div>
@@ -735,11 +564,7 @@ const HomePage = () => {
                 ))}
               </div>
               
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="mt-8"
-              >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="mt-8">
                 <Link 
                   to="/register" 
                   className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
@@ -884,10 +709,7 @@ const HomePage = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link 
                     to="/register" 
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl hover:opacity-90 transition-opacity"
@@ -897,15 +719,12 @@ const HomePage = () => {
                   </Link>
                 </motion.div>
                 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link 
                     to="/login" 
                     className="inline-flex items-center justify-center px-8 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-colors"
                   >
-                    Log in  Now
+                    Log in Now
                   </Link>
                 </motion.div>
               </div>
@@ -923,7 +742,7 @@ const HomePage = () => {
       <footer className="border-t border-gray-200 dark:border-gray-800 py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            {/* Footer Logo - Matches Active Nav Logo */}
+            {/* Footer Logo */}
             <div className="flex items-center gap-2 mb-6 md:mb-0">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -977,34 +796,6 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
-
-      {/* Global Styles */}
-      <style jsx global>{`
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-        
-        html {
-          scroll-behavior: smooth;
-        }
-        
-        /* Better mobile touch targets */
-        @media (max-width: 640px) {
-          button, a, [role="button"] {
-            min-height: 44px;
-            min-width: 44px;
-          }
-        }
-      `}</style>
     </div>
   );
 };

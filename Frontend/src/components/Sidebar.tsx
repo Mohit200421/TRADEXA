@@ -33,7 +33,6 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   
-  // Hooks must be called inside the component
   const { user } = useAuth();
   const { profile } = useProfile();
 
@@ -53,7 +52,6 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
     .toUpperCase()
     .slice(0, 2);
 
-  // Move avatarUrl inside the component where profile and user are available
   const avatarUrl = profile?.avatar?.url || user?.avatar;
 
   // Check if mobile on mount and resize
@@ -79,13 +77,14 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
   if (!isMobile) {
     return (
       <aside
-        className={`fixed left-0 top-0 h-screen bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800
+        className={`fixed left-0 top-0 h-full bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800
           transition-all duration-300 ease-in-out z-40
           ${collapsed ? "w-20" : "w-64"}
         `}
+        style={{ height: '100vh' }}
       >
-        {/* Logo Section */}
-        <div className="flex items-center justify-between px-4 py-5 border-b border-gray-100 dark:border-gray-800">
+        {/* Logo Section - No bottom border */}
+        <div className="flex items-center justify-between px-4 py-5">
           {!collapsed && (
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-lg flex items-center justify-center">
@@ -114,7 +113,7 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
         </div>
 
         {/* Menu Items */}
-        <nav className="px-3 space-y-1 mt-6">
+        <nav className="px-3 space-y-1 mt-2">
           {desktopMenuItems.map(({ label, path, icon: Icon }) => (
             <NavLink
               key={path}
@@ -140,8 +139,8 @@ export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProp
           ))}
         </nav>
 
-        {/* User Section at Bottom */}
-        <div className={`absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-gray-800 ${collapsed ? 'px-2' : 'px-4'}`}>
+        {/* User Section at Bottom - No border */}
+        <div className={`absolute bottom-0 left-0 right-0 p-4 ${collapsed ? 'px-2' : 'px-4'}`}>
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
             {!collapsed && (
               <div className="flex-1 min-w-0">
