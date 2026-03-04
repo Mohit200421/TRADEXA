@@ -18,6 +18,7 @@ import {
 
 import { useAuth } from "../contexts/AuthContext";
 import { useProfile } from "../contexts/ProfileContext";
+import { useNotifications } from "../contexts/NotificationContext";
 import defaultAvatar from "../assets/default-avatar.svg";
 
 interface TopbarProps {
@@ -59,6 +60,7 @@ const TIME_ZONES = [
 export default function Topbar({ collapsed, onToggleSidebar }: TopbarProps) {
   const { logout, user } = useAuth();
   const { profile } = useProfile();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const navigate = useNavigate();
   const location = useLocation();

@@ -20,11 +20,13 @@ import {
   TrendingDown,
   BookMarked,
   BookText,
-  BarChart3
+  BarChart3,
+  Share2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import toast from "react-hot-toast";
+import ShareTradeModal from "../components/ShareTradeModal";
 
 /* =====================
    TYPES
@@ -65,8 +67,23 @@ export default function Trades() {
   const [sortBy, setSortBy] = useState<"DATE" | "PNL" | "SYMBOL">("DATE");
   const [isGridView, setIsGridView] = useState(false);
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null);
+  const [shareModalTrade, setShareModalTrade] = useState<Trade | null>(null);
+  const [username, setUsername] = useState("Trader");
 
   const navigate = useNavigate();
+
+  // Fetch username on mount
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        setUsername(parsed.name || parsed.username || "Trader");
+      } catch {
+        // Keep default
+      }
+    }
+  }, []);
 
   /* =====================
      FETCH TRADES
@@ -257,14 +274,54 @@ export default function Trades() {
         </div>
       </div>
 
-      {/* LOADING STATE */}
+      {/* IMPROVED LOADING STATE */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400 mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Loading trades...</p>
+        <div className="bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-gray-800 p-8">
+          <div className="flex flex-col items-center justify-center py-12">
+            {/* Animated chart bars */}
+            <div className="relative mb-8">
+              <div className="flex items-end gap-2 h-24">
+                <div className="w-8 bg-blue-200 dark:bg-blue-900/30 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '40px', animationDelay: '0ms' }} />
+                <div className="w-8 bg-blue-300 dark:bg-blue-800/40 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '60px', animationDelay: '200ms' }} />
+                <div className="w-8 bg-blue-400 dark:bg-blue-700/50 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '80px', animationDelay: '400ms' }} />
+                <div className="w-8 bg-blue-500 dark:bg-blue-600/60 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '70px', animationDelay: '600ms' }} />
+                <div className="w-8 bg-cyan-400 dark:bg-cyan-700/50 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '50px', animationDelay: '800ms' }} />
+                <div className="w-8 bg-cyan-500 dark:bg-cyan-600/60 rounded-t-lg animate-[barGrow_1s_ease-in-out_infinite]" style={{ height: '30px', animationDelay: '1000ms' }} />
+              </div>
+              
+              {/* Floating candlesticks */}
+              <div className="absolute -top-4 -right-4 opacity-20">
+                <div className="w-12 h-12 border-2 border-blue-500 dark:border-blue-400 rounded transform rotate-12" />
+              </div>
+              <div className="absolute -bottom-4 -left-4 opacity-20">
+                <div className="w-12 h-12 border-2 border-cyan-500 dark:border-cyan-400 rounded transform -rotate-12" />
+              </div>
+            </div>
+
+            {/* Loading text with animated dots */}
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-500 dark:text-blue-400" />
+                <p className="text-lg font-medium text-gray-900 dark:text-white">
+                  Loading your trades
+                </p>
+              </div>
+              
+              <div className="flex justify-center gap-1.5">
+                <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite]" />
+                <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite_0.2s]" />
+                <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite_0.4s]" />
+              </div>
+            </div>
+
+            {/* Progress message */}
+            <p className="mt-6 text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+              Fetching your trading history...
+            </p>
+          </div>
         </div>
       ) : filteredTrades.length === 0 ? (
-        /* EMPTY STATE */
+        /* EMPTY STATE (unchanged) */
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
             <TrendingUp className="w-10 h-10 text-gray-400 dark:text-gray-500" />
@@ -396,6 +453,14 @@ export default function Trades() {
                         >
                           <Eye className="w-3 h-3" />
                           View Journal
+                        </button>
+                        <button
+                          onClick={() => setShareModalTrade(trade)}
+                          className="px-3 py-1.5 rounded-lg text-sm flex items-center gap-2 bg-gray-100 text-gray-600 
+                                   dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        >
+                          <Share2 className="w-3 h-3" />
+                          Share
                         </button>
                         <button
                           onClick={() => handleDelete(trade._id)}
@@ -537,6 +602,14 @@ export default function Trades() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
+                            onClick={() => setShareModalTrade(trade)}
+                            className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 
+                                     dark:text-gray-400 dark:hover:bg-gray-800"
+                            title="Share Trade"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button
                             onClick={() => navigate(`/trades/edit/${trade._id}`)}
                             className="p-1.5 rounded-lg text-gray-600 hover:bg-gray-100 
                                      dark:text-gray-400 dark:hover:bg-gray-800"
@@ -587,6 +660,15 @@ export default function Trades() {
             </div>
           )}
         </div>
+      )}
+
+      {/* SHARE MODAL */}
+      {shareModalTrade && (
+        <ShareTradeModal
+          trade={shareModalTrade}
+          username={username}
+          onClose={() => setShareModalTrade(null)}
+        />
       )}
     </div>
   );

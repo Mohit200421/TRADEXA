@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
@@ -39,13 +40,14 @@ import ForexSessions from "./tools/ForexSessions";
 import DashboardLayout from "./layouts/DashboardLayout";
 
 export default function App() {
-  return (
+return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <Toaster position="bottom-right" />
+        <NotificationProvider>
+          <BrowserRouter>
+            <Toaster position="bottom-right" />
 
-          <Routes>
+            <Routes>
             {/* ================= PUBLIC ROUTES ================= */}
             <Route path="/" element={<HomePage />} />
 
@@ -117,10 +119,11 @@ export default function App() {
 
             </Route>
 
-            {/* ================= FALLBACK ================= */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
+{/* ================= FALLBACK ================= */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

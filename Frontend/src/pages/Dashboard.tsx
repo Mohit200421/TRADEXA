@@ -7,6 +7,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  BarChart3,
+  LineChart,
+  PieChart,
 } from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
@@ -139,12 +142,107 @@ export default function Dashboard() {
     currentMonth.getMonth() + 1
   ).padStart(2, "0")}`;
 
+  // IMPROVED LOADING UI
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3 dark:text-blue-400" />
-          <p className="text-text-secondary dark:text-gray-400">Loading dashboard...</p>
+      <div className="min-h-[calc(100vh-12rem)] flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto p-6">
+          {/* Animated dashboard preview */}
+          <div className="bg-white dark:bg-black rounded-2xl border border-gray-200 dark:border-gray-800 p-6 shadow-xl">
+            {/* Header skeleton */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-2">
+                <div className="h-5 w-32 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded animate-pulse" />
+                <div className="h-4 w-24 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800 rounded animate-pulse" />
+              </div>
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
+            </div>
+
+            {/* Stats cards skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 rounded-xl border border-gray-200 dark:border-gray-800">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 mb-3 animate-pulse" />
+                  <div className="h-4 w-16 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded mb-2 animate-pulse" />
+                  <div className="h-6 w-20 bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+
+            {/* Chart area skeleton */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-32 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded animate-pulse" />
+                <div className="flex gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 animate-pulse" />
+                </div>
+              </div>
+
+              {/* Animated line chart */}
+              <div className="relative h-32 flex items-end gap-1">
+                {[...Array(20)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 bg-gradient-to-t from-blue-400/50 to-blue-500/50 dark:from-blue-600/30 dark:to-blue-500/30 rounded-t animate-[barRise_1.5s_ease-in-out_infinite]"
+                    style={{
+                      height: `${Math.random() * 60 + 20}%`,
+                      animationDelay: `${i * 0.1}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* X-axis labels */}
+              <div className="flex justify-between">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-3 w-8 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom stats skeleton */}
+            <div className="grid grid-cols-2 gap-4 mt-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+                  <div className="h-3 w-12 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 rounded mb-2 animate-pulse" />
+                  <div className="h-5 w-16 bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Loading message with animated dots */}
+          <div className="text-center mt-6 space-y-2">
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-500 dark:text-blue-400" />
+              <p className="text-lg font-medium text-gray-900 dark:text-white">
+                Loading Dashboard
+              </p>
+            </div>
+            <div className="flex justify-center gap-1.5">
+              <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite]" />
+              <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite_0.2s]" />
+              <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full animate-[loadingDot_1.4s_ease-in-out_infinite_0.4s]" />
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+              Analyzing your trading performance...
+            </p>
+          </div>
+
+          {/* Floating chart icons */}
+          <div className="absolute top-1/4 left-4 opacity-20 hidden lg:block">
+            <BarChart3 className="w-16 h-16 text-blue-500 dark:text-blue-400 animate-pulse" />
+          </div>
+          <div className="absolute bottom-1/4 right-4 opacity-20 hidden lg:block">
+            <LineChart className="w-16 h-16 text-purple-500 dark:text-purple-400 animate-pulse" />
+          </div>
+          <div className="absolute top-1/3 right-1/4 opacity-20 hidden lg:block">
+            <PieChart className="w-12 h-12 text-cyan-500 dark:text-cyan-400 animate-pulse" />
+          </div>
         </div>
       </div>
     );
