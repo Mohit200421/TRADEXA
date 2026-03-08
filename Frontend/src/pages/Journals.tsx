@@ -22,7 +22,7 @@ export default function Journals() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newJournalName, setNewJournalName] = useState("");
   const [newJournalDescription, setNewJournalDescription] = useState("");
-  const [newJournalAccountBalance, setNewJournalAccountBalance] = useState<string>("");
+  const [newJournalInitialBalance, setNewJournalInitialBalance] = useState<string>("");
   const [newJournalRiskPerTrade, setNewJournalRiskPerTrade] = useState<string>("1");
   const [saving, setSaving] = useState(false);
 
@@ -37,14 +37,14 @@ export default function Journals() {
       await createJournal({
         name: newJournalName.trim(),
         description: newJournalDescription.trim(),
-        accountBalance: newJournalAccountBalance ? Number(newJournalAccountBalance) : 0,
+        initialBalance: newJournalInitialBalance ? Number(newJournalInitialBalance) : 0,
         riskPerTrade: newJournalRiskPerTrade ? Number(newJournalRiskPerTrade) : 1,
       });
       toast.success("Journal created successfully");
       setIsCreating(false);
       setNewJournalName("");
       setNewJournalDescription("");
-      setNewJournalAccountBalance("");
+      setNewJournalInitialBalance("");
       setNewJournalRiskPerTrade("1");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create journal");
@@ -64,14 +64,14 @@ export default function Journals() {
       await updateJournal(id, {
         name: newJournalName.trim(),
         description: newJournalDescription.trim(),
-        accountBalance: newJournalAccountBalance ? Number(newJournalAccountBalance) : 0,
+        initialBalance: newJournalInitialBalance ? Number(newJournalInitialBalance) : 0,
         riskPerTrade: newJournalRiskPerTrade ? Number(newJournalRiskPerTrade) : 1,
       });
       toast.success("Journal updated successfully");
       setEditingId(null);
       setNewJournalName("");
       setNewJournalDescription("");
-      setNewJournalAccountBalance("");
+      setNewJournalInitialBalance("");
       setNewJournalRiskPerTrade("1");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update journal");
@@ -185,6 +185,41 @@ export default function Journals() {
                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
               />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                  Initial Balance ($)
+                </label>
+                <input
+                  type="number"
+                  value={newJournalInitialBalance}
+                  onChange={(e) => setNewJournalInitialBalance(e.target.value)}
+                  placeholder="e.g., 10000"
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 
+                           rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                  Risk Per Trade (%)
+                </label>
+                <input
+                  type="number"
+                  value={newJournalRiskPerTrade}
+                  onChange={(e) => setNewJournalRiskPerTrade(e.target.value)}
+                  placeholder="e.g., 1"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 
+                           rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCreate}
@@ -279,7 +314,7 @@ export default function Journals() {
                   </div>
                 </div>
               ) : (
-                /* VIEW MODE */
+              /* VIEW MODE */
                 <>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -296,6 +331,32 @@ export default function Journals() {
                           {journal.description}
                         </p>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Balance Info */}
+                  <div className="grid grid-cols-2 gap-2 mb-3 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Initial Balance</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        ${(journal.initialBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Current Balance</p>
+                      <p className={`font-semibold ${(journal.currentBalance || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        ${(journal.currentBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Total P&L</p>
+                      <p className={`font-semibold ${(journal.totalPnL || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {(journal.totalPnL || 0) >= 0 ? '+' : ''}${(journal.totalPnL || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Risk/Trade</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{journal.riskPerTrade || 1}%</p>
                     </div>
                   </div>
 

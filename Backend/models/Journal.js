@@ -23,7 +23,7 @@ const journalSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
-    accountBalance: {
+    initialBalance: {
       type: Number,
       default: 0,
       min: 0,
@@ -45,6 +45,12 @@ const journalSchema = new mongoose.Schema(
     timestamps: true, // createdAt, updatedAt
   }
 );
+
+/* ---------- Virtual for current balance ---------- */
+journalSchema.virtual("currentBalance").get(function () {
+  // This will be computed in the controller
+  return this._currentBalance;
+});
 
 /* ---------- Indexes ---------- */
 journalSchema.index({ userId: 1, createdAt: -1 });

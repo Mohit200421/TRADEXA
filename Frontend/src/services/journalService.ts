@@ -5,10 +5,16 @@ export interface Journal {
   userId: string;
   name: string;
   description: string;
+  initialBalance: number;
+  riskPerTrade: number;
   isDefault: boolean;
   createdAt: string;
   updatedAt: string;
   tradeCount?: number;
+  totalPnL?: number;
+  currentBalance?: number;
+  totalProfit?: number;
+  totalLoss?: number;
 }
 
 export const journalService = {
@@ -28,6 +34,8 @@ export const journalService = {
   createJournal: async (data: {
     name: string;
     description?: string;
+    initialBalance?: number;
+    riskPerTrade?: number;
     isDefault?: boolean;
   }): Promise<Journal> => {
     const response = await API.post("/journals", data);
@@ -40,6 +48,8 @@ export const journalService = {
     data: {
       name?: string;
       description?: string;
+      initialBalance?: number;
+      riskPerTrade?: number;
       isDefault?: boolean;
     }
   ): Promise<Journal> => {

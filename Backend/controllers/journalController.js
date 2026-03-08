@@ -7,7 +7,7 @@ const Trade = require("../models/Trade");
 exports.createJournal = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, description, accountBalance, riskPerTrade, isDefault } =
+    const { name, description, initialBalance, riskPerTrade, isDefault } =
       req.body;
 
     if (!name || !name.trim()) {
@@ -38,7 +38,7 @@ exports.createJournal = async (req, res) => {
       userId,
       name: name.trim(),
       description: description?.trim() || "",
-      accountBalance: accountBalance || 0,
+      initialBalance: initialBalance || 0,
       riskPerTrade: riskPerTrade || 1,
       isDefault: isDefault || false,
     });
@@ -61,16 +61,42 @@ exports.getJournals = async (req, res) => {
       createdAt: -1,
     });
 
-    // Get trade counts for each journal
+    // Get trade counts and calculate current balance for each journal
     const journalsWithCounts = await Promise.all(
       journals.map(async (journal) => {
-        const tradeCount = await Trade.countDocuments({
+        // Get all closed trades for this journal to calculate P&L
+        const trades = await Trade.find({
           userId,
           journalId: journal._id,
+          status: "CLOSED",
         });
+
+        const tradeCount = trades.length;
+
+        // Calculate total P&L from closed trades
+        const totalPnL = trades.reduce(
+          (sum, trade) => sum + (trade.pnl || 0),
+          0
+        );
+
+        // Current balance = initial balance + total P&L
+        const currentBalance = (journal.initialBalance || 0) + totalPnL;
+
+        // Calculate profit/loss separately
+        const totalProfit = trades
+          .filter((t) => t.pnl > 0)
+          .reduce((sum, t) => sum + t.pnl, 0);
+        const totalLoss = Math.abs(
+          trades.filter((t) => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0)
+        );
+
         return {
           ...journal.toObject(),
           tradeCount,
+          totalPnL,
+          currentBalance,
+          totalProfit,
+          totalLoss,
         };
       })
     );
@@ -119,7 +145,7 @@ exports.getJournalById = async (req, res) => {
 exports.updateJournal = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, description, accountBalance, riskPerTrade, isDefault } =
+    const { name, description, initialBalance, riskPerTrade, isDefault } =
       req.body;
 
     const journal = await Journal.findOne({
@@ -156,7 +182,7 @@ exports.updateJournal = async (req, res) => {
 
     journal.name = name?.trim() || journal.name;
     journal.description = description?.trim() ?? journal.description;
-    journal.accountBalance = accountBalance ?? journal.accountBalance;
+    journal.initialBalance = initialBalance ?? journal.initialBalance;
     journal.riskPerTrade = riskPerTrade ?? journal.riskPerTrade;
     journal.isDefault = isDefault ?? journal.isDefault;
 
