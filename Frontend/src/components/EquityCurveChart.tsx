@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -22,9 +22,11 @@ import {
   Calendar,
   Download,
   RefreshCw,
-  ChevronDown,
   Maximize2,
   Minimize2,
+  Activity,
+  AlertCircle,
+  Plus, // Added missing Plus import
 } from "lucide-react";
 import { format, subMonths, isAfter, isBefore } from "date-fns";
 
@@ -72,6 +74,7 @@ export default function EquityCurveChart() {
   const [showBrush, setShowBrush] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showStats, setShowStats] = useState(true);
+  const [chartHeight, setChartHeight] = useState(320);
 
   useEffect(() => {
     const fetchEquityCurve = async () => {
@@ -80,7 +83,30 @@ export default function EquityCurveChart() {
         setError(null);
         const journalId = selectedJournal?._id || "all";
         const res = await API.get(`/analytics/equity-curve/${journalId}`);
-        setData(res.data);
+        
+        // Validate and sanitize data
+        const responseData = res.data as EquityCurveData;
+        if (responseData?.summary) {
+          responseData.summary = {
+            initialBalance: responseData.summary.initialBalance || 0,
+            finalEquity: responseData.summary.finalEquity || 0,
+            totalPnL: responseData.summary.totalPnL || 0,
+            totalReturn: responseData.summary.totalReturn || 0,
+            maxDrawdown: responseData.summary.maxDrawdown || 0,
+            maxDrawdownPercent: responseData.summary.maxDrawdownPercent || 0,
+            maxDrawdownDate: responseData.summary.maxDrawdownDate,
+            totalTrades: responseData.summary.totalTrades || 0,
+            winningTrades: responseData.summary.winningTrades || 0,
+            losingTrades: responseData.summary.losingTrades || 0,
+            sharpeRatio: responseData.summary.sharpeRatio,
+            winRate: responseData.summary.winRate || 0,
+            averageWin: responseData.summary.averageWin || 0,
+            averageLoss: responseData.summary.averageLoss || 0,
+            profitFactor: responseData.summary.profitFactor || 0,
+          };
+        }
+        
+        setData(responseData);
       } catch (err: any) {
         console.error("Failed to fetch equity curve:", err);
         setError("Failed to load equity curve");
@@ -92,7 +118,13 @@ export default function EquityCurveChart() {
     fetchEquityCurve();
   }, [selectedJournal]);
 
-  const formatCurrency = (value: number) => {
+  // Helper functions with safe value handling
+  const safeNumber = (value: number | undefined | null, defaultValue = 0): number => {
+    return value ?? defaultValue;
+  };
+
+  const formatCurrency = (value: number | undefined | null): string => {
+    if (value === undefined || value === null) return "$0";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -101,7 +133,8 @@ export default function EquityCurveChart() {
     }).format(value);
   };
 
-  const formatCompactCurrency = (value: number) => {
+  const formatCompactCurrency = (value: number | undefined | null): string => {
+    if (value === undefined || value === null) return "$0";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
@@ -110,17 +143,27 @@ export default function EquityCurveChart() {
     }).format(value);
   };
 
-  const formatDate = (dateStr: string) => {
-    return format(new Date(dateStr), "MMM d");
+  const formatDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return "";
+    try {
+      return format(new Date(dateStr), "MMM d");
+    } catch {
+      return "";
+    }
   };
 
-  const formatFullDate = (dateStr: string) => {
-    return format(new Date(dateStr), "EEE, MMM d, yyyy");
+  const formatFullDate = (dateStr: string | undefined): string => {
+    if (!dateStr) return "";
+    try {
+      return format(new Date(dateStr), "EEE, MMM d, yyyy");
+    } catch {
+      return "";
+    }
   };
 
   // Filter data based on time range
-  const filteredData = (() => {
-    if (!data || timeRange === "ALL") return data?.equityCurve || [];
+  const filteredData = useMemo(() => {
+    if (!data?.equityCurve || timeRange === "ALL") return data?.equityCurve || [];
     
     const now = new Date();
     let cutoffDate = now;
@@ -141,27 +184,28 @@ export default function EquityCurveChart() {
     }
     
     return data.equityCurve.filter(point => 
-      isAfter(new Date(point.date), cutoffDate)
+      point?.date && isAfter(new Date(point.date), cutoffDate)
     );
-  })();
+  }, [data?.equityCurve, timeRange]);
 
-  // Calculate additional metrics for filtered data
-  const filteredMetrics = (() => {
-    if (filteredData.length === 0) return null;
+  // Calculate metrics for filtered data
+  const filteredMetrics = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return null;
     
-    const startEquity = filteredData[0].equity;
-    const endEquity = filteredData[filteredData.length - 1].equity;
-    const totalReturn = ((endEquity - startEquity) / startEquity) * 100;
+    const startEquity = filteredData[0]?.equity ?? 0;
+    const endEquity = filteredData[filteredData.length - 1]?.equity ?? 0;
+    const totalReturn = startEquity !== 0 ? ((endEquity - startEquity) / startEquity) * 100 : 0;
     
     // Calculate max drawdown in filtered period
     let maxDrawdown = 0;
-    let peak = filteredData[0].equity;
+    let peak = startEquity;
     
     filteredData.forEach(point => {
-      if (point.equity > peak) {
-        peak = point.equity;
+      const equity = point?.equity ?? 0;
+      if (equity > peak) {
+        peak = equity;
       }
-      const drawdown = peak - point.equity;
+      const drawdown = peak - equity;
       if (drawdown > maxDrawdown) {
         maxDrawdown = drawdown;
       }
@@ -173,21 +217,21 @@ export default function EquityCurveChart() {
       totalReturn,
       maxDrawdown,
     };
-  })();
+  }, [filteredData]);
 
   const handleExportData = () => {
-    if (!data) return;
+    if (!data?.equityCurve) return;
     
     const csvContent = [
       ["Date", "Equity", "P&L", "Symbol", "Drawdown", "Drawdown %"].join(","),
       ...data.equityCurve.map(point => 
         [
-          point.date,
-          point.equity,
-          point.pnl,
-          point.symbol || "",
-          point.drawdown || "",
-          point.drawdownPercent || "",
+          point?.date || "",
+          point?.equity ?? 0,
+          point?.pnl ?? 0,
+          point?.symbol || "",
+          point?.drawdown ?? 0,
+          point?.drawdownPercent ?? 0,
         ].join(",")
       ),
     ].join("\n");
@@ -205,7 +249,7 @@ export default function EquityCurveChart() {
     return (
       <div className={`card ${isExpanded ? 'fixed inset-4 z-50 overflow-auto' : ''} dark:bg-black dark:border-gray-800 transition-all duration-300`}>
         <div className="p-6">
-          {/* Animated loading skeleton */}
+          {/* Enhanced loading skeleton */}
           <div className="animate-pulse">
             <div className="flex justify-between items-center mb-6">
               <div>
@@ -221,7 +265,7 @@ export default function EquityCurveChart() {
             {/* Animated chart skeleton */}
             <div className="h-64 sm:h-80 relative">
               <div className="absolute inset-0 flex items-end gap-1">
-                {[...Array(20)].map((_, i) => (
+                {[...Array(30)].map((_, i) => (
                   <div
                     key={i}
                     className="flex-1 bg-gradient-to-t from-blue-400/30 to-blue-500/30 dark:from-blue-600/20 dark:to-blue-500/20 rounded-t animate-pulse"
@@ -231,6 +275,10 @@ export default function EquityCurveChart() {
                     }}
                   />
                 ))}
+              </div>
+              {/* Floating chart icons */}
+              <div className="absolute top-1/4 left-4 opacity-20">
+                <Activity className="w-12 h-12 text-blue-500 animate-pulse" />
               </div>
             </div>
             
@@ -244,12 +292,19 @@ export default function EquityCurveChart() {
               ))}
             </div>
           </div>
+          
+          {/* Loading message */}
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+              Loading equity curve data...
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error || !data || data.equityCurve.length === 0) {
+  if (error || !data || !data.equityCurve || data.equityCurve.length === 0) {
     return (
       <div className={`card ${isExpanded ? 'fixed inset-4 z-50' : ''} p-6 dark:bg-black dark:border-gray-800`}>
         <h3 className="font-semibold text-lg mb-4 dark:text-white flex items-center gap-2">
@@ -267,8 +322,9 @@ export default function EquityCurveChart() {
           </p>
           <button 
             onClick={() => window.location.href = '/trades'}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
           >
+            <Plus className="w-4 h-4" />
             Add Your First Trade
           </button>
         </div>
@@ -276,7 +332,7 @@ export default function EquityCurveChart() {
     );
   }
 
-  const { summary } = data;
+  const summary = data.summary;
 
   return (
     <div className={`card ${isExpanded ? 'fixed inset-4 z-50 overflow-auto' : ''} dark:bg-black dark:border-gray-800 transition-all duration-300`}>
@@ -293,6 +349,7 @@ export default function EquityCurveChart() {
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                  aria-label={isExpanded ? "Minimize" : "Expand"}
                 >
                   {isExpanded ? (
                     <Minimize2 className="w-4 h-4 text-gray-500" />
@@ -302,7 +359,7 @@ export default function EquityCurveChart() {
                 </button>
               </h3>
               <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                Account growth over time · {filteredData.length} data points
+                Account growth over time · {filteredData.length} trades
               </p>
             </div>
           </div>
@@ -332,6 +389,7 @@ export default function EquityCurveChart() {
                 onClick={() => setShowBrush(!showBrush)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Toggle range selector"
+                aria-label="Toggle range selector"
               >
                 <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
@@ -339,6 +397,7 @@ export default function EquityCurveChart() {
                 onClick={() => setShowStats(!showStats)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Toggle statistics"
+                aria-label="Toggle statistics"
               >
                 <Percent className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
@@ -346,6 +405,7 @@ export default function EquityCurveChart() {
                 onClick={handleExportData}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Export data"
+                aria-label="Export data"
               >
                 <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
@@ -353,6 +413,7 @@ export default function EquityCurveChart() {
                 onClick={() => window.location.reload()}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Refresh"
+                aria-label="Refresh"
               >
                 <RefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
@@ -363,47 +424,53 @@ export default function EquityCurveChart() {
         {/* Quick Stats Cards */}
         {showStats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {/* Current Balance */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-3">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Current Balance</p>
               <p className="text-lg font-bold dark:text-white">
                 {formatCompactCurrency(summary.finalEquity)}
               </p>
               <p className={`text-xs ${
-                summary.totalReturn >= 0 ? "text-green-600" : "text-red-600"
+                safeNumber(summary.totalReturn) >= 0 ? "text-green-600" : "text-red-600"
               }`}>
-                {summary.totalReturn >= 0 ? "+" : ""}{summary.totalReturn.toFixed(2)}%
+                {safeNumber(summary.totalReturn) >= 0 ? "+" : ""}
+                {safeNumber(summary.totalReturn).toFixed(2)}%
               </p>
             </div>
 
+            {/* Total P&L */}
             <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-3">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Total P&L</p>
               <p className={`text-lg font-bold ${
-                summary.totalPnL >= 0 ? "text-green-600" : "text-red-600"
+                safeNumber(summary.totalPnL) >= 0 ? "text-green-600" : "text-red-600"
               }`}>
-                {summary.totalPnL >= 0 ? "+" : ""}{formatCompactCurrency(summary.totalPnL)}
+                {safeNumber(summary.totalPnL) >= 0 ? "+" : ""}
+                {formatCompactCurrency(summary.totalPnL)}
               </p>
               <p className="text-xs text-gray-500">
-                {summary.winningTrades}W / {summary.losingTrades}L
+                {safeNumber(summary.winningTrades)}W / {safeNumber(summary.losingTrades)}L
               </p>
             </div>
 
+            {/* Max Drawdown */}
             <div className="bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-3">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Max Drawdown</p>
               <p className="text-lg font-bold text-red-600 dark:text-red-400">
                 -{formatCompactCurrency(summary.maxDrawdown)}
               </p>
               <p className="text-xs text-gray-500">
-                {summary.maxDrawdownPercent.toFixed(2)}%
+                {safeNumber(summary.maxDrawdownPercent).toFixed(2)}%
               </p>
             </div>
 
+            {/* Win Rate */}
             <div className="bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-3">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Win Rate</p>
               <p className="text-lg font-bold dark:text-white">
-                {summary.winRate.toFixed(1)}%
+                {safeNumber(summary.winRate).toFixed(1)}%
               </p>
               <p className="text-xs text-gray-500">
-                PF: {summary.profitFactor.toFixed(2)}
+                PF: {safeNumber(summary.profitFactor).toFixed(2)}
               </p>
             </div>
           </div>
@@ -475,7 +542,7 @@ export default function EquityCurveChart() {
               <YAxis
                 yAxisId="right"
                 orientation="right"
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
+                tickFormatter={(value) => `${safeNumber(value).toFixed(1)}%`}
                 tick={{ fontSize: 11, fill: '#6B7280' }}
                 stroke="#9CA3AF"
                 tickLine={false}
@@ -487,7 +554,9 @@ export default function EquityCurveChart() {
               <Tooltip
                 content={({ active, payload, label }) => {
                   if (active && payload && payload.length) {
-                    const chartData = payload[0].payload;
+                    const chartData = payload[0]?.payload;
+                    if (!chartData) return null;
+                    
                     return (
                       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 min-w-[200px]">
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -505,11 +574,11 @@ export default function EquityCurveChart() {
                           <div className="flex justify-between items-center">
                             <span className="text-xs text-gray-600 dark:text-gray-400">Trade P&L:</span>
                             <span className={`text-sm font-semibold ${
-                              chartData.pnl >= 0
+                              safeNumber(chartData.pnl) >= 0
                                 ? "text-green-600 dark:text-green-400"
                                 : "text-red-600 dark:text-red-400"
                             }`}>
-                              {chartData.pnl >= 0 ? "+" : ""}
+                              {safeNumber(chartData.pnl) >= 0 ? "+" : ""}
                               {formatCurrency(chartData.pnl)}
                             </span>
                           </div>
@@ -526,11 +595,14 @@ export default function EquityCurveChart() {
                           <div className="flex justify-between items-center pt-1 border-t border-gray-100 dark:border-gray-700">
                             <span className="text-xs text-gray-600 dark:text-gray-400">Return:</span>
                             <span className={`text-xs font-medium ${
-                              ((chartData.equity - data.initialBalance) / data.initialBalance) >= 0
+                              data.initialBalance !== 0 && 
+                              ((safeNumber(chartData.equity) - safeNumber(data.initialBalance)) / safeNumber(data.initialBalance) * 100) >= 0
                                 ? "text-green-600"
                                 : "text-red-600"
                             }`}>
-                              {((chartData.equity - data.initialBalance) / data.initialBalance * 100).toFixed(1)}%
+                              {data.initialBalance !== 0 
+                                ? ((safeNumber(chartData.equity) - safeNumber(data.initialBalance)) / safeNumber(data.initialBalance) * 100).toFixed(1)
+                                : "0"}%
                             </span>
                           </div>
                         </div>
@@ -543,7 +615,7 @@ export default function EquityCurveChart() {
               
               {/* Reference line for initial balance */}
               <ReferenceLine
-                y={data.initialBalance}
+                y={safeNumber(data.initialBalance)}
                 yAxisId="left"
                 stroke="#9CA3AF"
                 strokeDasharray="3 3"
@@ -572,7 +644,7 @@ export default function EquityCurveChart() {
         </div>
 
         {/* Range selector brush */}
-        {showBrush && (
+        {showBrush && data.equityCurve && (
           <div className="h-16 mt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.equityCurve}>
@@ -597,8 +669,34 @@ export default function EquityCurveChart() {
           </div>
         )}
 
+        {/* Summary Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Initial</p>
+            <p className="font-semibold dark:text-white">
+              {formatCurrency(summary.initialBalance)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Current</p>
+            <p className="font-semibold dark:text-white">
+              {formatCurrency(summary.finalEquity)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Max Drawdown</p>
+            <p className="font-semibold text-red-500 dark:text-red-400">
+              -{formatCurrency(summary.maxDrawdown)}
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Total Trades</p>
+            <p className="font-semibold dark:text-white">{summary.totalTrades}</p>
+          </div>
+        </div>
+
         {/* Performance Metrics */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="space-y-2">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Risk Metrics
@@ -607,13 +705,13 @@ export default function EquityCurveChart() {
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Sharpe Ratio</p>
                 <p className="text-sm font-semibold dark:text-white">
-                  {summary.sharpeRatio?.toFixed(2) || "N/A"}
+                  {summary.sharpeRatio ? summary.sharpeRatio.toFixed(2) : "N/A"}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Max DD %</p>
                 <p className="text-sm font-semibold text-red-500 dark:text-red-400">
-                  {summary.maxDrawdownPercent.toFixed(2)}%
+                  {safeNumber(summary.maxDrawdownPercent).toFixed(2)}%
                 </p>
               </div>
             </div>
@@ -647,31 +745,31 @@ export default function EquityCurveChart() {
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Profit Factor</p>
                 <p className="text-sm font-semibold dark:text-white">
-                  {summary.profitFactor.toFixed(2)}
+                  {safeNumber(summary.profitFactor).toFixed(2)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Win Rate</p>
                 <p className="text-sm font-semibold dark:text-white">
-                  {summary.winRate.toFixed(1)}%
+                  {safeNumber(summary.winRate).toFixed(1)}%
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Filtered period summary (if not showing all) */}
+        {/* Filtered period summary */}
         {timeRange !== "ALL" && filteredMetrics && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <p className="text-xs text-gray-600 dark:text-gray-400">
               {timeRange} Performance: 
               <span className={`ml-2 font-semibold ${
-                filteredMetrics.totalReturn >= 0 
+                safeNumber(filteredMetrics.totalReturn) >= 0 
                   ? "text-green-600 dark:text-green-400" 
                   : "text-red-600 dark:text-red-400"
               }`}>
-                {filteredMetrics.totalReturn >= 0 ? "+" : ""}
-                {filteredMetrics.totalReturn.toFixed(2)}%
+                {safeNumber(filteredMetrics.totalReturn) >= 0 ? "+" : ""}
+                {safeNumber(filteredMetrics.totalReturn).toFixed(2)}%
               </span>
               <span className="mx-2">·</span>
               Max Drawdown: 
