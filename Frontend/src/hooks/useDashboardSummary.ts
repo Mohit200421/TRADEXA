@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import API from "../api/axios";
 
 export interface DashboardSummary {
+  totalTrades: number;
   totalPnL: number;
   winRate: number;
+  returnOnCapital: number;
+  initialBalance: number;
   performance: {
     date: string;
     pnl: number;
@@ -26,7 +29,8 @@ export interface DashboardSummary {
 }
 
 export function useDashboardSummary(
-  range: "1D" | "1W" | "1M" | "ALL"
+  range: "1D" | "1W" | "1M" | "ALL",
+  journalId?: string
 ) {
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +42,9 @@ export function useDashboardSummary(
         setLoading(true);
         setError(null);
 
+        const journalParam = journalId ? `&journalId=${journalId}` : '';
         const res = await API.get(
-          `/dashboard/summary?range=${range}`
+          `/dashboard/summary?range=${range}${journalParam}`
         );
 
         setData(res.data);
@@ -53,7 +58,7 @@ export function useDashboardSummary(
     };
 
     fetchSummary();
-  }, [range]); // 🔥 important
+  }, [range, journalId]);
 
   return { data, loading, error };
 }

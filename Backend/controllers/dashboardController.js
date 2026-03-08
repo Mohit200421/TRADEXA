@@ -1,14 +1,28 @@
 const Trade = require("../models/Trade");
+const Journal = require("../models/Journal");
 
 /**
  * GET /api/dashboard/summary
  * Query params:
  *  - range = 1D | 1W | 1M | ALL (default ALL)
+ *  - journalId = specific journal ID (optional)
  */
 exports.getDashboardSummary = async (req, res) => {
   try {
     const userId = req.user.id;
     const range = (req.query.range || "ALL").toUpperCase();
+    const journalId = req.query.journalId;
+
+    /* ================= JOURNAL INFO ================= */
+    let journal = null;
+    let initialBalance = 0;
+
+    if (journalId && journalId !== "all") {
+      journal = await Journal.findOne({ _id: journalId, userId });
+      if (journal) {
+        initialBalance = journal.initialBalance || 0;
+      }
+    }
 
     /* ================= RANGE HANDLING ================= */
     let startDate = null;
@@ -36,6 +50,11 @@ exports.getDashboardSummary = async (req, res) => {
       userId,
       status: "CLOSED",
     };
+
+    // Filter by journal if specified
+    if (journalId && journalId !== "all") {
+      query.journalId = journalId;
+    }
 
     if (startDate) {
       query.exitDate = { $gte: startDate };
@@ -81,6 +100,12 @@ exports.getDashboardSummary = async (req, res) => {
         ? Number(((winningTrades / totalTrades) * 100).toFixed(2))
         : 0;
 
+    /* ================= RETURN ON CAPITAL ================= */
+    let returnOnCapital = 0;
+    if (initialBalance > 0) {
+      returnOnCapital = Number(((totalPnL / initialBalance) * 100).toFixed(2));
+    }
+
     /* ================= QUICK STATS ================= */
     const avgWin =
       profits.length > 0
@@ -91,9 +116,7 @@ exports.getDashboardSummary = async (req, res) => {
 
     const avgLoss =
       losses.length > 0
-        ? Number(
-            (losses.reduce((a, b) => a + b, 0) / losses.length).toFixed(2)
-          )
+        ? Number((losses.reduce((a, b) => a + b, 0) / losses.length).toFixed(2))
         : 0;
 
     const bestTrade = profits.length > 0 ? Math.max(...profits) : 0;
@@ -111,8 +134,7 @@ exports.getDashboardSummary = async (req, res) => {
     const lossRateDecimal = 1 - winRateDecimal;
 
     const expectancy =
-      (winRateDecimal * avgWin) -
-      (lossRateDecimal * Math.abs(avgLoss));
+      winRateDecimal * avgWin - lossRateDecimal * Math.abs(avgLoss);
 
     /* ================= MAX DRAWDOWN ================= */
     let peak = 0;
@@ -139,18 +161,28 @@ exports.getDashboardSummary = async (req, res) => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
-    const recentActivity = await Trade.find({
+    const recentActivityQuery = {
       userId,
       createdAt: { $gte: startOfToday },
-    })
+    };
+
+    // Filter recent activity by journal if specified
+    if (journalId && journalId !== "all") {
+      recentActivityQuery.journalId = journalId;
+    }
+
+    const recentActivity = await Trade.find(recentActivityQuery)
       .sort({ createdAt: -1 })
       .limit(5)
       .select("symbol type pnl lotSize createdAt");
 
     /* ================= RESPONSE ================= */
     res.json({
+      totalTrades,
       totalPnL: Number(totalPnL.toFixed(2)),
       winRate,
+      returnOnCapital,
+      initialBalance,
       maxDrawdown: Number(maxDrawdown.toFixed(2)),
       performance,
       monthlyPnL,

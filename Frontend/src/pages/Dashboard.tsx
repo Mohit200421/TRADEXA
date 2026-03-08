@@ -298,7 +298,7 @@ export default function Dashboard() {
         </div>
 
         {/* PROFIT FACTOR */}
-        <div className="card p-4 sm:p-5 col-span-1 xs:col-span-2 lg:col-span-1 dark:bg-black dark:border-gray-800">
+        <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-3 sm:mb-4 dark:bg-green-900">
             <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
           </div>
@@ -313,6 +313,41 @@ export default function Dashboard() {
           </p>
         </div>
       </section>
+
+      {/* RETURNS ON CAPITAL */}
+      {selectedJournal && selectedJournal.initialBalance > 0 && (
+        <section className="grid grid-cols-1 gap-3">
+          <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Returns on Capital</p>
+                <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${
+                  ((totalPnL / selectedJournal.initialBalance) * 100) >= 0 
+                    ? "text-green-600 dark:text-green-400" 
+                    : "text-red-500 dark:text-red-400"
+                }`}>
+                  {totalPnL >= 0 ? "+" : ""}
+                  {((totalPnL / selectedJournal.initialBalance) * 100).toFixed(2)}%
+                </p>
+                <p className="text-xs text-text-secondary dark:text-gray-400 mt-1">
+                  Based on initial balance: {formatCurrency(selectedJournal.initialBalance)}
+                </p>
+              </div>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                ((totalPnL / selectedJournal.initialBalance) * 100) >= 0 
+                  ? "bg-green-100 dark:bg-green-900" 
+                  : "bg-red-100 dark:bg-red-900"
+              }`}>
+                <TrendingUp className={`w-6 h-6 ${
+                  ((totalPnL / selectedJournal.initialBalance) * 100) >= 0 
+                    ? "text-green-600 dark:text-green-400" 
+                    : "text-red-600 dark:text-red-400"
+                }`} />
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* =====================
           MONTHLY P&L - Mobile Responsive
