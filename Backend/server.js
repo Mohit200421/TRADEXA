@@ -14,6 +14,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const profileAvatarRoutes = require("./routes/profileAvatarRoutes");
 const communityRoutes = require("./routes/communityRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 const CommunityMessage = require("./models/CommunityMessage");
 const connectDB = require("./config/db");
@@ -44,6 +45,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/profile", profileAvatarRoutes);
 app.use("/api/community", communityRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Trading Journal Backend Running ");

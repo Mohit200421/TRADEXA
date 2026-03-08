@@ -15,6 +15,7 @@ import {
 import API from "../api/axios";
 import toast from "react-hot-toast";
 import { useJournals } from "../contexts/JournalContext";
+import EquityCurveChart from "../components/EquityCurveChart";
 
 /* =====================
    TYPES
@@ -395,6 +396,9 @@ export default function Dashboard() {
           </div>
         </section>
       )}
+
+      {/* EQUITY CURVE */}
+      <EquityCurveChart />
 
       {/* =====================
           MONTHLY P&L - Mobile Responsive
