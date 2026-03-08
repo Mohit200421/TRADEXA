@@ -3,6 +3,7 @@ import {
   DollarSign,
   Target,
   TrendingUp,
+  TrendingDown,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -108,6 +109,21 @@ export default function Dashboard() {
       : closedTrades.reduce((best, t) =>
           t.pnl > best.pnl ? t : best
         );
+
+  // Analytics calculations
+  const profits = winningTrades.map(t => t.pnl);
+  const losses = losingTrades.map(t => t.pnl);
+  
+  const avgWin = profits.length > 0
+    ? profits.reduce((a, b) => a + b, 0) / profits.length
+    : 0;
+    
+  const avgLoss = losses.length > 0
+    ? Math.abs(losses.reduce((a, b) => a + b, 0) / losses.length)
+    : 0;
+    
+  const bestTrade = profits.length > 0 ? Math.max(...profits) : 0;
+  const worstTrade = losses.length > 0 ? Math.min(...losses) : 0;
 
   /* =====================
      MONTHLY P&L DATA
@@ -632,13 +648,17 @@ export default function Dashboard() {
           QUICK STATS - Mobile Responsive
       ===================== */}
       <section className="card p-4 sm:p-5 mt-4 sm:mt-6 dark:bg-black dark:border-gray-800">
-        <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4 dark:text-white">Quick Stats</h3>
+        <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4 dark:text-white">Analytics</h3>
 
         <div className="grid grid-cols-2 xs:grid-cols-4 gap-2 sm:gap-4 text-sm">
           <QuickStat label="Total Trades" value={closedTrades.length} />
           <QuickStat label="Winning Trades" value={winningTrades.length} />
           <QuickStat label="Losing Trades" value={losingTrades.length} />
           <QuickStat label="Profit Factor" value={profitFactor ?? "--"} />
+          <QuickStat label="Avg Win" value={formatCurrency(avgWin)} />
+          <QuickStat label="Avg Loss" value={formatCurrency(avgLoss)} />
+          <QuickStat label="Best Trade" value={formatCurrency(bestTrade)} />
+          <QuickStat label="Worst Trade" value={formatCurrency(worstTrade)} />
         </div>
       </section>
     </div>

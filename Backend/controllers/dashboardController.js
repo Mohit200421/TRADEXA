@@ -138,6 +138,69 @@ exports.getDashboardSummary = async (req, res) => {
     const expectancy =
       winRateDecimal * avgWin - lossRateDecimal * Math.abs(avgLoss);
 
+    /* ================= MORE ANALYTICS ================= */
+    // Calculate average holding time (in hours)
+    let totalHoldingTime = 0;
+    let tradesWithExit = 0;
+    trades.forEach((trade) => {
+      if (trade.entryDate && trade.exitDate) {
+        const entryTime = new Date(trade.entryDate).getTime();
+        const exitTime = new Date(trade.exitDate).getTime();
+        const holdingHours = (exitTime - entryTime) / (1000 * 60 * 60);
+        totalHoldingTime += holdingHours;
+        tradesWithExit++;
+      }
+    });
+    const avgHoldingTime =
+      tradesWithExit > 0 ? (totalHoldingTime / tradesWithExit).toFixed(1) : 0;
+
+    // Consecutive wins/losses
+    let maxConsecutiveWins = 0;
+    let maxConsecutiveLosses = 0;
+    let currentWins = 0;
+    let currentLosses = 0;
+    trades.forEach((trade) => {
+      if (trade.pnl > 0) {
+        currentWins++;
+        currentLosses = 0;
+        if (currentWins > maxConsecutiveWins) maxConsecutiveWins = currentWins;
+      } else if (trade.pnl < 0) {
+        currentLosses++;
+        currentWins = 0;
+        if (currentLosses > maxConsecutiveLosses)
+          maxConsecutiveLosses = currentLosses;
+      }
+    });
+
+    // Average risk/reward ratio
+    let riskRewardRatio = 0;
+    if (avgLoss > 0 && avgWin > 0) {
+      riskRewardRatio = Number((avgWin / Math.abs(avgLoss)).toFixed(2));
+    }
+
+    // Sharpe-like ratio (simplified)
+    const returns = trades.map((t) => t.pnl);
+    const avgReturn =
+      returns.length > 0
+        ? returns.reduce((a, b) => a + b, 0) / returns.length
+        : 0;
+    const variance =
+      returns.length > 0
+        ? returns.reduce((a, b) => a + Math.pow(b - avgReturn, 2), 0) /
+          returns.length
+        : 0;
+    const stdDev = Math.sqrt(variance);
+    const sharpeRatio =
+      stdDev > 0 ? Number((avgReturn / stdDev).toFixed(2)) : 0;
+
+    // Recovery factor
+    const recoveryFactor =
+      maxDrawdown > 0 ? Number((totalPnL / maxDrawdown).toFixed(2)) : 0;
+
+    // Risk of ruin (simplified)
+    const lossRate = totalTrades > 0 ? losingTrades / totalTrades : 0;
+    const winLossRatio = winningTrades > 0 ? winningTrades / losingTrades : 0;
+
     /* ================= MAX DRAWDOWN ================= */
     let peak = 0;
     let maxDrawdown = 0;
@@ -196,6 +259,13 @@ exports.getDashboardSummary = async (req, res) => {
         worstTrade,
         profitFactor,
         expectancy: Number(expectancy.toFixed(2)),
+        avgHoldingTime,
+        maxConsecutiveWins,
+        maxConsecutiveLosses,
+        riskRewardRatio,
+        sharpeRatio,
+        recoveryFactor,
+        winLossRatio,
       },
       recentActivity,
     });
