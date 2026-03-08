@@ -19,6 +19,7 @@ exports.createTrade = async (req, res) => {
       entryDate,
       exitDate,
       journal,
+      journalId,
     } = req.body;
 
     if (!symbol || !type || !entryPrice || !lotSize || !entryDate) {
@@ -54,6 +55,14 @@ exports.createTrade = async (req, res) => {
     let journalData = {};
     if (journal) journalData = JSON.parse(journal);
 
+    // Check if journal has meaningful content
+    const isJournaled = Boolean(
+      journalData.preTrade?.trim() ||
+        journalData.postTrade?.trim() ||
+        journalData.emotions?.trim() ||
+        journalData.lessons?.trim()
+    );
+
     let screenshots = [];
     if (req.files?.length) {
       for (const file of req.files) {
@@ -70,6 +79,7 @@ exports.createTrade = async (req, res) => {
 
     const trade = await Trade.create({
       userId,
+      journalId: journalId || null,
       symbol: symbol.toUpperCase(),
       type: type.toUpperCase(),
       entryPrice,
@@ -103,7 +113,19 @@ exports.createTrade = async (req, res) => {
    GET ALL TRADES
 ========================= */
 exports.getTrades = async (req, res) => {
-  const trades = await Trade.find({ userId: req.user.id }).sort({
+  const { journalId } = req.query;
+  const query = { userId: req.user.id };
+
+  // Filter by journalId if provided
+  if (journalId && journalId !== "all") {
+    if (journalId === "unassigned") {
+      query.journalId = null;
+    } else {
+      query.journalId = journalId;
+    }
+  }
+
+  const trades = await Trade.find(query).sort({
     entryDate: -1,
   });
   res.json(trades);
@@ -200,6 +222,7 @@ exports.updateTrade = async (req, res) => {
       lotSize,
       entryDate,
       exitDate,
+      journalId,
     } = req.body;
 
     entryPrice = Number(entryPrice);
@@ -238,6 +261,7 @@ exports.updateTrade = async (req, res) => {
     trade.pips = pips;
     trade.pnl = pnl;
     trade.status = status;
+    trade.journalId = journalId || null;
 
     await trade.save();
     res.json(trade);

@@ -9,6 +9,14 @@ const tradeSchema = new mongoose.Schema(
       index: true,
     },
 
+    /* ---------- Journal Reference ---------- */
+    journalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Journal",
+      default: null,
+      index: true,
+    },
+
     /* ---------- Core Trade Info ---------- */
     symbol: {
       type: String,
@@ -104,5 +112,6 @@ const tradeSchema = new mongoose.Schema(
 tradeSchema.index({ userId: 1, createdAt: -1 });
 tradeSchema.index({ userId: 1, exitDate: -1 });
 tradeSchema.index({ userId: 1, status: 1 });
+tradeSchema.index({ userId: 1, journalId: 1 });
 
 module.exports = mongoose.model("Trade", tradeSchema);

@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 
 const authRoutes = require("./routes/authRoutes");
 const tradeRoutes = require("./routes/tradeRoutes");
+const journalRoutes = require("./routes/journalRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
@@ -19,19 +20,10 @@ const connectDB = require("./config/db");
 
 const app = express();
 
-/* =========================
-   TRUST PROXY
-========================= */
 app.set("trust proxy", 1);
 
-/* =========================
-   BODY PARSER
-========================= */
 app.use(express.json());
 
-/* =========================
-   🔥 CORS – ALLOW ALL (PRODUCTION SAFE)
-========================= */
 app.use(
   cors({
     origin: true,
@@ -41,14 +33,11 @@ app.use(
   })
 );
 
-// 🔥 FORCE PREFLIGHT SUCCESS
 app.options("*", cors());
 
-/* =========================
-   ROUTES
-========================= */
 app.use("/api/auth", authRoutes);
 app.use("/api/trades", tradeRoutes);
+app.use("/api/journals", journalRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/dashboard", dashboardRoutes);
@@ -56,16 +45,10 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/profile", profileAvatarRoutes);
 app.use("/api/community", communityRoutes);
 
-/* =========================
-   HEALTH
-========================= */
 app.get("/", (req, res) => {
-  res.send("Trading Journal Backend Running ✅");
+  res.send("Trading Journal Backend Running ");
 });
 
-/* =========================
-   SERVER + SOCKET
-========================= */
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -86,12 +69,9 @@ io.on("connection", (socket) => {
   });
 });
 
-/* =========================
-   START
-========================= */
 connectDB();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

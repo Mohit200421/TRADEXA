@@ -4,6 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
+  BookOpen,
   Wrench,
   ChevronLeft,
   ChevronRight,
@@ -14,24 +15,32 @@ import { useState, useEffect } from "react";
 interface SidebarProps {
   collapsed?: boolean;
   setCollapsed?: (v: boolean) => void;
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (v: boolean) => void;
 }
 
 const desktopMenuItems = [
   { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Journal", path: "/trades", icon: Briefcase },
+  { label: "Trades", path: "/trades", icon: Briefcase },
+  { label: "Journals", path: "/journals", icon: BookOpen },
   { label: "Tools", path: "/tools", icon: Wrench },
 ];
 
 const mobileMenuItems = [
   { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Journal", path: "/trades", icon: Briefcase },
+  { label: "Trades", path: "/trades", icon: Briefcase },
+  { label: "Journals", path: "/journals", icon: BookOpen },
   { label: "Tools", path: "/tools", icon: Wrench },
 ];
 
-export default function Sidebar({ collapsed = false, setCollapsed }: SidebarProps) {
+export default function Sidebar({ collapsed = false, setCollapsed, mobileMenuOpen: externalMobileMenuOpen, setMobileMenuOpen: externalSetMobileMenuOpen }: SidebarProps) {
   const [isMobile, setIsMobile] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [internalMobileMenuOpen, setInternalMobileMenuOpen] = useState(false);
   const location = useLocation();
+  
+  // Use external state if provided, otherwise use internal state
+  const mobileMenuOpen = externalMobileMenuOpen !== undefined ? externalMobileMenuOpen : internalMobileMenuOpen;
+  const setMobileMenuOpen = externalSetMobileMenuOpen || setInternalMobileMenuOpen;
   
   const { user } = useAuth();
   const { profile } = useProfile();

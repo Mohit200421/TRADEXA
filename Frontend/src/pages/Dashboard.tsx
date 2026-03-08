@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import API from "../api/axios";
 import toast from "react-hot-toast";
+import { useJournals } from "../contexts/JournalContext";
 
 /* =====================
    TYPES
@@ -47,6 +48,7 @@ function formatCurrency(amount: number) {
 export default function Dashboard() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+  const { selectedJournal } = useJournals();
 
   /* =====================
      MONTHLY P&L STATE
@@ -63,7 +65,9 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchTrades = async () => {
       try {
-        const res = await API.get("/trades");
+        setLoading(true);
+        const journalId = selectedJournal?._id || "all";
+        const res = await API.get(`/trades?journalId=${journalId}`);
         setTrades(res.data || []);
       } catch (err: any) {
         toast.error(err.response?.data?.message || "Failed to load dashboard");
@@ -72,7 +76,7 @@ export default function Dashboard() {
       }
     };
     fetchTrades();
-  }, []);
+  }, [selectedJournal]);
 
   /* =====================
      STATS CALCULATIONS

@@ -21,12 +21,14 @@ import {
   BookMarked,
   BookText,
   BarChart3,
-  Share2
+  Share2,
+  Folder
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import toast from "react-hot-toast";
 import ShareTradeModal from "../components/ShareTradeModal";
+import { useJournals } from "../contexts/JournalContext";
 
 /* =====================
    TYPES
@@ -71,6 +73,7 @@ export default function Trades() {
   const [username, setUsername] = useState("Trader");
 
   const navigate = useNavigate();
+  const { journals, selectedJournal, selectJournal } = useJournals();
 
   // Fetch username on mount
   useEffect(() => {
@@ -91,7 +94,9 @@ export default function Trades() {
   const fetchTrades = async () => {
     try {
       setLoading(true);
-      const res = await API.get("/trades");
+      // Pass journalId as query param if a journal is selected
+      const journalId = selectedJournal?._id || "all";
+      const res = await API.get(`/trades?journalId=${journalId}`);
       setTrades(res.data);
     } catch {
       toast.error("Failed to load trades");
@@ -102,7 +107,7 @@ export default function Trades() {
 
   useEffect(() => {
     fetchTrades();
-  }, []);
+  }, [selectedJournal]);
 
   /* =====================
      DELETE TRADE
@@ -210,7 +215,30 @@ export default function Trades() {
           </div>
 
           {/* FILTER & SORT CONTROLS */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Journal Filter */}
+            {journals.length > 0 && (
+              <div className="relative">
+                <select
+                  value={selectedJournal?._id || ""}
+                  onChange={(e) => {
+                    const journal = journals.find(j => j._id === e.target.value);
+                    selectJournal(journal || null);
+                  }}
+                  className="appearance-none pl-3 pr-8 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
+                           rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Journals</option>
+                  {journals.map((journal) => (
+                    <option key={journal._id} value={journal._id}>
+                      {journal.name}
+                    </option>
+                  ))}
+                </select>
+                <Folder className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+              </div>
+            )}
+
             {/* Type Filter */}
             <div className="relative">
               <select

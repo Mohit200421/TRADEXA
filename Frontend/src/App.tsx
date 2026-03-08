@@ -17,6 +17,7 @@ import HomePage from "./pages/HomePage";
 
 import Dashboard from "./pages/Dashboard";
 import Trades from "./pages/Trades";
+import Journals from "./pages/Journals";
 import AddTradePage from "./pages/AddTradePage";
 import EditTrade from "./pages/EditTrade";
 import TradeDetails from "./pages/TradeDetails";
@@ -84,6 +85,7 @@ return (
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/trades" element={<Trades />} />
+              <Route path="/journals" element={<Journals />} />
               <Route path="/trades/add" element={<AddTradePage />} />
               <Route path="/trades/edit/:id" element={<EditTrade />} />
               <Route path="/trades/:tradeId" element={<TradeDetails />} />

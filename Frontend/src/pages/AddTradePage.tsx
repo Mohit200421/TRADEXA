@@ -1,18 +1,21 @@
-import { Calendar, Plus, Upload, Save, X, TrendingUp, TrendingDown, DollarSign, Package, Tag, Brain, BookOpen, BarChart, Image as ImageIcon, AlertCircle, Check, ArrowLeft, Star, Clock, Target, Zap, Loader2 } from "lucide-react";
+import { Calendar, Plus, Upload, Save, X, TrendingUp, TrendingDown, DollarSign, Package, Tag, Brain, BookOpen, BarChart, Image as ImageIcon, AlertCircle, Check, ArrowLeft, Star, Clock, Target, Zap, Loader2, Folder } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import toast from "react-hot-toast";
+import { useJournals } from "../contexts/JournalContext";
 
 type Checklist = Record<string, boolean>;
 
 export default function AddTradePage() {
   const navigate = useNavigate();
+  const { journals } = useJournals();
 
   const [entryDate, setEntryDate] = useState<Date | null>(new Date());
   const [exitDate, setExitDate] = useState<Date | null>(null);
+  const [selectedJournalId, setSelectedJournalId] = useState<string>("");
 
   const [trade, setTrade] = useState({
     symbol: "",
@@ -80,6 +83,11 @@ export default function AddTradePage() {
 
       formData.append("journal", JSON.stringify(journal));
       screenshots.forEach((f) => formData.append("screenshots", f));
+      
+      // Add journalId if selected
+      if (selectedJournalId) {
+        formData.append("journalId", selectedJournalId);
+      }
 
       await API.post("/trades", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -229,6 +237,34 @@ export default function AddTradePage() {
                   </div>
                 </div>
               </div>
+
+              {/* Journal Selection */}
+              {journals && journals.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                    <span className="flex items-center gap-2">
+                      <Folder className="w-4 h-4" />
+                      Trading Journal
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedJournalId}
+                      onChange={(e) => setSelectedJournalId(e.target.value)}
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none text-sm"
+                    >
+                      <option value="">No Journal (Default)</option>
+                      {journals.map((j: any) => (
+                        <option key={j._id} value={j._id}>{j.name}</option>
+                      ))}
+                    </select>
+                    <Folder className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Select a journal to organize this trade
+                  </p>
+                </div>
+              )}
 
               {/* Dates */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
