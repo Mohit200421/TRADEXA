@@ -23,6 +23,19 @@ const journalSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
+    accountBalance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    riskPerTrade: {
+      type: Number,
+      default: 1,
+      min: 0,
+      max: 100,
+    },
+
     isDefault: {
       type: Boolean,
       default: false,

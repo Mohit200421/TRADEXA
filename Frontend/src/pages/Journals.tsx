@@ -22,6 +22,8 @@ export default function Journals() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newJournalName, setNewJournalName] = useState("");
   const [newJournalDescription, setNewJournalDescription] = useState("");
+  const [newJournalAccountBalance, setNewJournalAccountBalance] = useState<string>("");
+  const [newJournalRiskPerTrade, setNewJournalRiskPerTrade] = useState<string>("1");
   const [saving, setSaving] = useState(false);
 
   const handleCreate = async () => {
@@ -35,11 +37,15 @@ export default function Journals() {
       await createJournal({
         name: newJournalName.trim(),
         description: newJournalDescription.trim(),
+        accountBalance: newJournalAccountBalance ? Number(newJournalAccountBalance) : 0,
+        riskPerTrade: newJournalRiskPerTrade ? Number(newJournalRiskPerTrade) : 1,
       });
       toast.success("Journal created successfully");
       setIsCreating(false);
       setNewJournalName("");
       setNewJournalDescription("");
+      setNewJournalAccountBalance("");
+      setNewJournalRiskPerTrade("1");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to create journal");
     } finally {
@@ -58,11 +64,15 @@ export default function Journals() {
       await updateJournal(id, {
         name: newJournalName.trim(),
         description: newJournalDescription.trim(),
+        accountBalance: newJournalAccountBalance ? Number(newJournalAccountBalance) : 0,
+        riskPerTrade: newJournalRiskPerTrade ? Number(newJournalRiskPerTrade) : 1,
       });
       toast.success("Journal updated successfully");
       setEditingId(null);
       setNewJournalName("");
       setNewJournalDescription("");
+      setNewJournalAccountBalance("");
+      setNewJournalRiskPerTrade("1");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update journal");
     } finally {

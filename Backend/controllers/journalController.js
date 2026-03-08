@@ -7,7 +7,8 @@ const Trade = require("../models/Trade");
 exports.createJournal = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, description, isDefault } = req.body;
+    const { name, description, accountBalance, riskPerTrade, isDefault } =
+      req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ message: "Journal name is required" });
@@ -37,6 +38,8 @@ exports.createJournal = async (req, res) => {
       userId,
       name: name.trim(),
       description: description?.trim() || "",
+      accountBalance: accountBalance || 0,
+      riskPerTrade: riskPerTrade || 1,
       isDefault: isDefault || false,
     });
 
@@ -116,7 +119,8 @@ exports.getJournalById = async (req, res) => {
 exports.updateJournal = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, description, isDefault } = req.body;
+    const { name, description, accountBalance, riskPerTrade, isDefault } =
+      req.body;
 
     const journal = await Journal.findOne({
       _id: req.params.id,
@@ -152,6 +156,8 @@ exports.updateJournal = async (req, res) => {
 
     journal.name = name?.trim() || journal.name;
     journal.description = description?.trim() ?? journal.description;
+    journal.accountBalance = accountBalance ?? journal.accountBalance;
+    journal.riskPerTrade = riskPerTrade ?? journal.riskPerTrade;
     journal.isDefault = isDefault ?? journal.isDefault;
 
     await journal.save();
