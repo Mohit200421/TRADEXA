@@ -316,7 +316,38 @@ export default function Dashboard() {
 
       {/* RETURNS ON CAPITAL */}
       {selectedJournal && selectedJournal.initialBalance > 0 && (
-        <section className="grid grid-cols-1 gap-3">
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* CURRENT BALANCE */}
+          <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs sm:text-sm text-text-secondary dark:text-gray-400">Current Balance</p>
+                <p className={`text-xl sm:text-2xl lg:text-3xl font-bold ${
+                  (selectedJournal.initialBalance + totalPnL) >= 0 
+                    ? "text-green-600 dark:text-green-400" 
+                    : "text-red-500 dark:text-red-400"
+                }`}>
+                  {formatCurrency(selectedJournal.initialBalance + totalPnL)}
+                </p>
+                <p className="text-xs text-text-secondary dark:text-gray-400 mt-1">
+                  Initial: {formatCurrency(selectedJournal.initialBalance)}
+                </p>
+              </div>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                (selectedJournal.initialBalance + totalPnL) >= selectedJournal.initialBalance 
+                  ? "bg-green-100 dark:bg-green-900" 
+                  : "bg-red-100 dark:bg-red-900"
+              }`}>
+                <DollarSign className={`w-6 h-6 ${
+                  (selectedJournal.initialBalance + totalPnL) >= selectedJournal.initialBalance 
+                    ? "text-green-600 dark:text-green-400" 
+                    : "text-red-600 dark:text-red-400"
+                }`} />
+              </div>
+            </div>
+          </div>
+
+          {/* RETURNS ON CAPITAL */}
           <div className="card p-4 sm:p-5 dark:bg-black dark:border-gray-800">
             <div className="flex items-center justify-between">
               <div>
@@ -330,7 +361,7 @@ export default function Dashboard() {
                   {((totalPnL / selectedJournal.initialBalance) * 100).toFixed(2)}%
                 </p>
                 <p className="text-xs text-text-secondary dark:text-gray-400 mt-1">
-                  Based on initial balance: {formatCurrency(selectedJournal.initialBalance)}
+                  Based on initial: {formatCurrency(selectedJournal.initialBalance)}
                 </p>
               </div>
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${

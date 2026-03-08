@@ -102,8 +102,10 @@ exports.getDashboardSummary = async (req, res) => {
 
     /* ================= RETURN ON CAPITAL ================= */
     let returnOnCapital = 0;
+    let currentBalance = initialBalance;
     if (initialBalance > 0) {
       returnOnCapital = Number(((totalPnL / initialBalance) * 100).toFixed(2));
+      currentBalance = Number((initialBalance + totalPnL).toFixed(2));
     }
 
     /* ================= QUICK STATS ================= */
@@ -183,6 +185,7 @@ exports.getDashboardSummary = async (req, res) => {
       winRate,
       returnOnCapital,
       initialBalance,
+      currentBalance,
       maxDrawdown: Number(maxDrawdown.toFixed(2)),
       performance,
       monthlyPnL,
